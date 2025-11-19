@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML-Suite - Local Machine Learning Operations</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/console-logs.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/settings.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/storage.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/tuning.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/light-theme.css') }}">
+</head>
+<body>
+    <!-- System Stats Display -->
+    <div class="system-stats">
+        <div class="stat-row">
+            <span class="stat-label">CPU:</span>
+            <span class="stat-value" id="cpu-usage">0%</span>
+        </div>
+        <div class="stat-bar">
+            <div class="stat-bar-fill" id="cpu-bar" style="width: 0%"></div>
+        </div>
+        <div class="stat-row" style="margin-top: 8px;">
+            <span class="stat-label">RAM:</span>
+            <span class="stat-value" id="ram-usage">0%</span>
+        </div>
+        <div class="stat-bar">
+            <div class="stat-bar-fill" id="ram-bar" style="width: 0%"></div>
+        </div>
+        <div class="stat-row" style="margin-top: 8px;">
+            <span class="stat-label">Status:</span>
+            <span class="stat-value" id="system-status">ONLINE</span>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1 class="logo">ML-Suite</h1>
+                <p class="subtitle">Local ML Operations</p>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#" class="nav-link active" data-module="ocr">OCR Module</a></li>
+                <li><a href="#" class="nav-link" data-module="trainer">Model Trainer</a></li>
+                <li><a href="#" class="nav-link" data-module="models">Model Management</a></li>
+                <li><a href="#" class="nav-link" data-module="notebook">Notebook Viewer</a></li>
+                <li><a href="#" class="nav-link" data-module="console">Console/Logs</a></li>
+                <li><a href="#" class="nav-link" data-module="settings">Settings</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- OCR Module -->
+            <div id="ocr-module" class="module active">
+                <div class="module-header">
+                    <h2>OCR Module</h2>
+                    <p>Extract text from images and PDFs</p>
+                </div>
+                <div class="module-content">
+                    <div class="upload-zone" id="ocr-upload-zone">
+                        <div class="upload-content">
+                            <p class="upload-icon">📄</p>
+                            <p>Drag and drop images here or click to browse</p>
+                            <p class="upload-hint">Supports: PNG, JPG, JPEG, PDF (max 10MB each)</p>
+                            <input type="file" id="ocr-file-input" multiple accept="image/*,.pdf" style="display: none;">
+                        </div>
+                    </div>
+                    <div id="ocr-results" class="results-container"></div>
+                </div>
+            </div>
+
+
+            <!-- Model Trainer Module -->
+            <div id="trainer-module" class="module">
+                <div class="module-header">
+                    <h2>Model Trainer</h2>
+                    <p>Train regression models from CSV data</p>
+                </div>
+                <div class="module-content">
+                    <!-- Step 1: Data Upload -->
+                    <div class="trainer-step" id="step-upload">
+                        <h3>Step 1: Upload Data</h3>
+                        
+                        <!-- File Upload Section -->
+                        <div class="upload-zone" id="csv-upload-zone">
+                            <div class="upload-content">
+                                <p class="upload-icon">CSV</p>
+                                <p>Drag and drop CSV file here or click to browse</p>
+                                <p class="upload-hint">Max file size: 100MB</p>
+                                <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
+                            </div>
+                        </div>
+                        
+                        <!-- API Import Section -->
+                        <div style="margin: 20px 0; text-align: center; color: var(--text-secondary);">
+                            <span>--- OR ---</span>
+                        </div>
+                        
+                        <div style="background-color: var(--bg-surface); border: 1px solid var(--border); padding: 20px; border-radius: 4px;">
+                            <h4 style="color: var(--accent); margin-bottom: 15px;">Import from API</h4>
+                            <div class="form-group">
+                                <label for="api-url">API URL</label>
+                                <input type="text" id="api-url" class="terminal-input" placeholder="https://api.example.com/data.csv">
+                            </div>
+                            <div class="form-group">
+                                <label for="api-method">Method</label>
+                                <select id="api-method" class="terminal-select">
+                                    <option value="GET">GET</option>
+                                    <option value="POST">POST</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="api-headers">Headers (JSON format, optional)</label>
+                                <textarea id="api-headers" class="terminal-input" rows="3" placeholder='{"Authorization": "Bearer token"}'></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="api-body">Body (JSON format, for POST only)</label>
+                                <textarea id="api-body" class="terminal-input" rows="3" placeholder='{"query": "SELECT * FROM data"}'></textarea>
+                            </div>
+                            <button id="import-api-btn" class="btn btn-primary">Import from API</button>
+                        </div>
+                        
+                        <div id="csv-preview" class="preview-container"></div>
+                    </div>
+
+                    <!-- Step 2: Data Preparation -->
+                    <div class="trainer-step" id="step-prepare" style="display: none;">
+                        <h3>Step 2: Prepare Data</h3>
+                        <div id="column-selector" class="column-selector"></div>
+                        <div id="data-cleaning" class="data-cleaning"></div>
+                        <div id="train-test-split" class="train-test-split"></div>
+                    </div>
+
+                    <!-- Step 3: Training -->
+                    <div class="trainer-step" id="step-train" style="display: none;">
+                        <h3>Step 3: Train Model</h3>
+                        
+                        <div class="form-group">
+                            <label for="model-category-select">Model Category</label>
+                            <select id="model-category-select" class="terminal-select">
+                                <option value="supervised_regression" selected>Supervised - Regression</option>
+                                <option value="supervised_classification">Supervised - Classification</option>
+                                <option value="unsupervised_clustering">Unsupervised - Clustering</option>
+                                <option value="unsupervised_dim_reduction">Unsupervised - Dimensionality Reduction</option>
+                            </select>
+                            <p class="form-help" id="category-description">Predict continuous numerical values (e.g., house prices, sales forecasting)</p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="model-type-select">Model Type</label>
+                            <select id="model-type-select" class="terminal-select">
+                                <!-- Will be populated dynamically based on category -->
+                            </select>
+                            <p class="form-help" id="model-description">Choose the machine learning algorithm</p>
+                        </div>
+
+                        <div id="model-parameters" class="form-group" style="display: none;">
+                            <label>Model Parameters</label>
+                            <div id="model-params-container"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="enable-hyperparameter-tuning">
+                                <span>Enable Hyperparameter Tuning</span>
+                            </label>
+                            <p class="form-help">Automatically find optimal parameters (increases training time)</p>
+                        </div>
+
+                        <div id="hyperparameter-tuning-section" style="display: none;" class="form-group">
+                            <label for="tuning-method">Tuning Method</label>
+                            <select id="tuning-method" class="terminal-select">
+                                <option value="random" selected>Random Search (Recommended, 2-10 min)</option>
+                                <option value="halving">Halving Grid Search (Fast, 1-5 min)</option>
+                                <option value="grid">Grid Search (Thorough, 10-60 min)</option>
+                                <option value="bayesian">Bayesian Optimization (Advanced, 5-20 min)</option>
+                            </select>
+                            
+                            <label for="tuning-cv-folds">Cross-Validation Folds</label>
+                            <input type="number" id="tuning-cv-folds" class="terminal-input" value="3" min="2" max="10">
+                            <p class="form-help">More folds = more accurate but slower</p>
+                            
+                            <label for="tuning-iterations">Search Iterations</label>
+                            <input type="number" id="tuning-iterations" class="terminal-input" value="10" min="5" max="100">
+                            <p class="form-help">For Random/Bayesian: number of parameter combinations to try</p>
+                            
+                            <div class="tuning-warning">
+                                <strong>⚠️ Performance Warning:</strong>
+                                <p>Hyperparameter tuning will significantly increase training time and resource usage.</p>
+                                <ul>
+                                    <li>Random Search: 2-10 minutes, ~2-4GB RAM</li>
+                                    <li>Halving Grid: 1-5 minutes, ~2-3GB RAM</li>
+                                    <li>Grid Search: 10-60 minutes, ~4-8GB RAM</li>
+                                    <li>Bayesian: 5-20 minutes, ~3-5GB RAM</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="enable-custom-code">
+                                <span>Enable Custom Code Execution</span>
+                            </label>
+                            <p class="form-help">Run custom Python code after training</p>
+                        </div>
+
+                        <div id="custom-code-section" style="display: none;" class="form-group">
+                            <label for="custom-code">Custom Python Code</label>
+                            <textarea id="custom-code" class="terminal-textarea" rows="8" placeholder="# Access model as 'model', predictions as 'y_pred'&#10;# Access test data as 'X_test', 'y_test'&#10;# Example:&#10;# print('Custom analysis:', model.score(X_test, y_test))"></textarea>
+                            <p class="form-help">⚠️ Use with caution - this code runs on the server</p>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="model-name">Model Name</label>
+                            <input type="text" id="model-name" class="terminal-input" placeholder="my_regression_model">
+                        </div>
+                        
+                        <button id="train-btn" class="btn btn-primary">Start Training</button>
+                        <div id="training-progress" class="progress-container"></div>
+                        <div id="training-results" class="results-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Model Management Module -->
+            <div id="models-module" class="module">
+                <div class="module-header">
+                    <h2>Model Management</h2>
+                    <p>View, manage, and use trained models</p>
+                </div>
+                <div class="module-content">
+                    <div style="margin-bottom: 20px;">
+                        <button id="refresh-models-btn" class="btn btn-secondary">Refresh Models</button>
+                        <button id="load-model-btn" class="btn btn-primary" style="margin-left: 10px;">Load Model for Training</button>
+                    </div>
+                    <div id="model-loader" style="display: none; margin-bottom: 20px;">
+                        <h3>Load Model</h3>
+                        <p>Select a model to use as starting point for training:</p>
+                        <select id="model-select-dropdown" class="terminal-select" style="width: 100%; max-width: 500px;">
+                            <option value="">-- Select a model --</option>
+                        </select>
+                        <button id="confirm-load-model-btn" class="btn btn-primary" style="margin-top: 10px;">Load Selected Model</button>
+                        <button id="cancel-load-model-btn" class="btn btn-secondary" style="margin-top: 10px; margin-left: 10px;">Cancel</button>
+                    </div>
+                    <div id="models-list" class="models-list"></div>
+                </div>
+            </div>
+
+            <!-- Notebook Viewer Module -->
+            <div id="notebook-module" class="module">
+                <div class="module-header">
+                    <h2>Notebook Viewer</h2>
+                    <p>View Jupyter notebook structure</p>
+                </div>
+                <div class="module-content">
+                    <div class="upload-zone" id="notebook-upload-zone">
+                        <div class="upload-content">
+                            <p class="upload-icon">NOTEBOOK</p>
+                            <p>Drag and drop .ipynb file here or click to browse</p>
+                            <input type="file" id="notebook-file-input" accept=".ipynb" style="display: none;">
+                        </div>
+                    </div>
+                    <div id="notebook-viewer" class="notebook-viewer"></div>
+                </div>
+            </div>
+
+            <!-- Console/Logs Module -->
+            <div id="console-module" class="module">
+                <div class="module-header">
+                    <h2>Console & Logs</h2>
+                    <p>Real-time application logs and errors</p>
+                </div>
+                <div class="module-content">
+                    <div class="console-container">
+                        <div class="console-tabs">
+                            <div class="console-tab active" data-tab="all">ALL</div>
+                            <div class="console-tab" data-tab="info">INFO</div>
+                            <div class="console-tab" data-tab="errors">ERRORS</div>
+                            <div class="console-tab" data-tab="warnings">WARNINGS</div>
+                        </div>
+                        <div class="console-content" id="console-output">
+                            <div class="console-line console-line-info">
+                                <span class="console-timestamp">[SYSTEM]</span>
+                                <span>ML-Suite initialized successfully</span>
+                            </div>
+                        </div>
+                        <div class="console-controls">
+                            <button class="btn btn-secondary" id="clear-console-btn">Clear Console</button>
+                            <button class="btn btn-secondary" id="export-logs-btn">Export Logs</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Module -->
+            <div id="settings-module" class="module">
+                <div class="module-header">
+                    <h2>Settings</h2>
+                    <p>Configure visual effects and system resource usage</p>
+                </div>
+                <div class="module-content">
+                    <!-- Settings Navigation Tabs -->
+                    <div class="settings-nav">
+                        <button class="settings-nav-btn active" data-settings-tab="visual">Visual Effects</button>
+                        <button class="settings-nav-btn" data-settings-tab="performance">Performance</button>
+                        <button class="settings-nav-btn" data-settings-tab="theme">Themes</button>
+                        <button class="settings-nav-btn" data-settings-tab="training">Model Training</button>
+                        <button class="settings-nav-btn" data-settings-tab="storage">Storage & Paths</button>
+                    </div>
+
+                    <!-- Visual Effects Tab -->
+                    <div class="settings-tab active" id="settings-tab-visual">
+                    <div class="settings-section">
+                        <h3>CRT Terminal Effects</h3>
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="setting-scanlines">
+                                <span>CRT Scanlines Effect</span>
+                            </label>
+                            <p class="setting-description">Show horizontal scanlines for retro CRT monitor look</p>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="setting-flicker">
+                                <span>Screen Flicker Animation</span>
+                            </label>
+                            <p class="setting-description">Subtle screen flicker effect</p>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="setting-glow">
+                                <span>Text Glow Effect</span>
+                            </label>
+                            <p class="setting-description">Glowing text shadow on all elements</p>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="setting-vignette">
+                                <span>Screen Vignette</span>
+                            </label>
+                            <p class="setting-description">Darkened edges for curved screen effect</p>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="setting-curvature">
+                                <span>CRT Screen Curvature</span>
+                            </label>
+                            <p class="setting-description">Curved screen distortion effect (experimental)</p>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span>Screen Brightness</span>
+                            </label>
+                            <input type="range" id="setting-brightness" min="60" max="120" value="100" class="setting-slider">
+                            <span id="brightness-value">100%</span>
+                            <p class="setting-description">Adjust overall screen brightness</p>
+                        </div>
+                    </div>
+                    
+                    <div class="settings-section">
+                        <h3>System Monitoring</h3>
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="setting-system-stats" checked>
+                                <span>Show System Stats</span>
+                            </label>
+                            <p class="setting-description">Display CPU and RAM usage in top-right corner</p>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span>Stats Update Frequency</span>
+                            </label>
+                            <select id="setting-stats-frequency" class="terminal-select" style="max-width: 300px;">
+                                <option value="1000">Every 1 second (High CPU usage)</option>
+                                <option value="2000" selected>Every 2 seconds (Balanced)</option>
+                                <option value="5000">Every 5 seconds (Low CPU usage)</option>
+                                <option value="10000">Every 10 seconds (Minimal)</option>
+                            </select>
+                            <p class="setting-description">How often to update system statistics</p>
+                        </div>
+                    </div>
+                    </div>
+
+                    <!-- Performance Tab -->
+                    <div class="settings-tab" id="settings-tab-performance">
+                    <div class="settings-section">
+                        <h3>System Resources</h3>
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="setting-system-stats" checked>
+                                <span>Show System Stats</span>
+                            </label>
+                            <p class="setting-description">Display CPU and RAM usage in top-right corner</p>
+                        </div>
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span>Stats Update Frequency</span>
+                            </label>
+                            <select id="setting-stats-frequency" class="terminal-select" style="max-width: 300px;">
+                                <option value="1000">Every 1 second (High CPU usage)</option>
+                                <option value="2000" selected>Every 2 seconds (Balanced)</option>
+                                <option value="5000">Every 5 seconds (Low CPU usage)</option>
+                                <option value="10000">Every 10 seconds (Minimal)</option>
+                            </select>
+                            <p class="setting-description">How often to update system statistics</p>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Hyperparameter Tuning Defaults</h3>
+                        <p class="setting-description" style="margin-bottom: 15px;">Configure default settings for automatic hyperparameter optimization</p>
+                        
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span>Default Tuning Method</span>
+                            </label>
+                            <select id="setting-default-tuning-method" class="terminal-select" style="max-width: 300px;">
+                                <option value="random" selected>Random Search (Recommended)</option>
+                                <option value="halving">Halving Grid Search (Fastest)</option>
+                                <option value="grid">Grid Search (Most Thorough)</option>
+                                <option value="bayesian">Bayesian Optimization (Advanced)</option>
+                            </select>
+                            <p class="setting-description">Default method when hyperparameter tuning is enabled</p>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span>Default CV Folds</span>
+                            </label>
+                            <input type="number" id="setting-default-cv-folds" class="terminal-input" value="3" min="2" max="10" style="max-width: 100px;">
+                            <p class="setting-description">Cross-validation folds (more = better but slower)</p>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span>Default Search Iterations</span>
+                            </label>
+                            <input type="number" id="setting-default-tuning-iterations" class="terminal-input" value="10" min="5" max="100" style="max-width: 100px;">
+                            <p class="setting-description">Number of parameter combinations to try (Random/Bayesian)</p>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="setting-tuning-use-all-cores">
+                                <span>Use All CPU Cores</span>
+                            </label>
+                            <p class="setting-description">⚠️ Faster but may freeze UI during training</p>
+                        </div>
+                    </div>
+                    </div>
+
+                    <!-- Themes Tab -->
+                    <div class="settings-tab" id="settings-tab-theme">
+                    <div class="settings-section">
+                        <h3>Terminal Color Schemes</h3>
+                        <div class="theme-grid">
+                            <div class="theme-card" data-theme="green">
+                                <div class="theme-preview" style="background: #000; color: #00ff00; border: 2px solid #00ff00;">
+                                    <span>$ Classic Green</span>
+                                </div>
+                                <p>VT100/VT220 Style</p>
+                            </div>
+                            <div class="theme-card" data-theme="amber">
+                                <div class="theme-preview" style="background: #000; color: #ffb000; border: 2px solid #ffb000;">
+                                    <span>$ Amber</span>
+                                </div>
+                                <p>Amber Phosphor</p>
+                            </div>
+                            <div class="theme-card" data-theme="blue">
+                                <div class="theme-preview" style="background: #000; color: #00ffff; border: 2px solid #00ffff;">
+                                    <span>$ Cyan Blue</span>
+                                </div>
+                                <p>IBM Mainframe</p>
+                            </div>
+                            <div class="theme-card" data-theme="white">
+                                <div class="theme-preview" style="background: #000; color: #fff; border: 2px solid #fff;">
+                                    <span>$ White</span>
+                                </div>
+                                <p>High Contrast</p>
+                            </div>
+                            <div class="theme-card" data-theme="red">
+                                <div class="theme-preview" style="background: #000; color: #ff0000; border: 2px solid #ff0000;">
+                                    <span>$ Red Alert</span>
+                                </div>
+                                <p>Warning Systems</p>
+                            </div>
+                            <div class="theme-card" data-theme="purple">
+                                <div class="theme-preview" style="background: #000; color: #ff00ff; border: 2px solid #ff00ff;">
+                                    <span>$ Purple</span>
+                                </div>
+                                <p>Retro Purple</p>
+                            </div>
+                            <div class="theme-card" data-theme="matrix">
+                                <div class="theme-preview" style="background: #000; color: #00aa00; border: 2px solid #00aa00;">
+                                    <span>$ Matrix</span>
+                                </div>
+                                <p>Digital Rain</p>
+                            </div>
+                            <div class="theme-card" data-theme="hacker">
+                                <div class="theme-preview" style="background: #0a0a0a; color: #0f0; border: 2px solid #0f0;">
+                                    <span>$ Hacker Green</span>
+                                </div>
+                                <p>Elite Hacker</p>
+                            </div>
+                            <div class="theme-card" data-theme="light">
+                                <div class="theme-preview" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; border: 2px solid #667eea; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                                    <span style="font-family: 'Inter', sans-serif; font-weight: 600;">Modern Light</span>
+                                </div>
+                                <p>Light & Colorful</p>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+
+                    <!-- Model Training Tab -->
+                    <div class="settings-tab" id="settings-tab-training">
+                    <div class="settings-section">
+                        <h3>Training Metrics Display</h3>
+                        <p class="setting-description" style="margin-bottom: 15px;">Select which metrics to display after model training</p>
+                        
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="metric-r2" checked>
+                                <span>R² Score (Coefficient of Determination)</span>
+                            </label>
+                            <p class="setting-description">Measures how well predictions match actual values (0-1, higher is better). 1.0 = perfect fit</p>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="metric-rmse" checked>
+                                <span>RMSE (Root Mean Squared Error)</span>
+                            </label>
+                            <p class="setting-description">Average prediction error in original units (lower is better). Penalizes large errors more</p>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="metric-mae" checked>
+                                <span>MAE (Mean Absolute Error)</span>
+                            </label>
+                            <p class="setting-description">Average absolute difference between predicted and actual (lower is better). Less sensitive to outliers</p>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="metric-mse">
+                                <span>MSE (Mean Squared Error)</span>
+                            </label>
+                            <p class="setting-description">Average squared difference (lower is better). Useful for comparing models</p>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="metric-adjusted-r2">
+                                <span>Adjusted R² Score</span>
+                            </label>
+                            <p class="setting-description">R² adjusted for number of features. Better for comparing models with different feature counts</p>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Visualization Charts</h3>
+                        <p class="setting-description" style="margin-bottom: 15px;">Select which charts to generate after training</p>
+                        
+                        <div class="setting-item">
+                            <label for="chart-search">Search Charts</label>
+                            <input type="text" id="chart-search" class="terminal-input" placeholder="Search charts (e.g., 'roc', 'confusion', 'scatter')..." style="max-width: 400px;">
+                            <p class="setting-description">Type to filter visualization options</p>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span>Chart Style</span>
+                            </label>
+                            <select id="chart-style" class="terminal-select" style="max-width: 300px;">
+                                <option value="terminal">Terminal Style (Green on Black)</option>
+                                <option value="modern">Modern (Light)</option>
+                                <option value="dark">Dark Mode</option>
+                                <option value="colorful">Colorful</option>
+                            </select>
+                            <p class="setting-description">Visual style for all charts</p>
+                        </div>
+                        
+                        <h4 style="color: var(--accent); margin-top: 20px;">Regression Charts</h4>
+                        
+                        <div class="setting-item chart-option" data-keywords="actual predicted scatter plot regression">
+                            <label class="setting-label">
+                                <input type="checkbox" id="chart-actual-vs-predicted" checked>
+                                <span>Actual vs Predicted Scatter Plot</span>
+                            </label>
+                            <p class="setting-description">Shows how well predictions match actual values. Points closer to diagonal = better fit</p>
+                        </div>
+                        
+                        <div class="setting-item chart-option" data-keywords="residual error plot regression">
+                            <label class="setting-label">
+                                <input type="checkbox" id="chart-residuals" checked>
+                                <span>Residual Plot</span>
+                            </label>
+                            <p class="setting-description">Shows prediction errors. Random scatter around 0 = good model</p>
+                        </div>
+                        
+                        <div class="setting-item chart-option" data-keywords="feature importance coefficients bar regression classification">
+                            <label class="setting-label">
+                                <input type="checkbox" id="chart-feature-importance" checked>
+                                <span>Feature Importance (Coefficients)</span>
+                            </label>
+                            <p class="setting-description">Bar chart showing which features have most impact on predictions</p>
+                        </div>
+                        
+                        <div class="setting-item chart-option" data-keywords="prediction distribution histogram regression">
+                            <label class="setting-label">
+                                <input type="checkbox" id="chart-distribution">
+                                <span>Prediction Distribution</span>
+                            </label>
+                            <p class="setting-description">Histogram comparing distribution of actual vs predicted values</p>
+                        </div>
+                        
+                        <div class="setting-item chart-option" data-keywords="learning curve overfitting training validation regression classification">
+                            <label class="setting-label">
+                                <input type="checkbox" id="chart-learning-curve">
+                                <span>Learning Curve</span>
+                            </label>
+                            <p class="setting-description">Training/validation score vs training size (helps detect overfitting)</p>
+                        </div>
+                        
+                        <div class="setting-item chart-option" data-keywords="correlation matrix heatmap feature regression">
+                            <label class="setting-label">
+                                <input type="checkbox" id="chart-correlation-matrix">
+                                <span>Feature Correlation Matrix</span>
+                            </label>
+                            <p class="setting-description">Heatmap showing correlations between features</p>
+                        </div>
+                        
+                        <h4 style="color: var(--accent); margin-top: 20px;">Classification Charts</h4>
+                        
+                        <div class="setting-item chart-option" data-keywords="confusion matrix heatmap classification accuracy">
+                            <label class="setting-label">
+                                <input type="checkbox" id="chart-confusion-matrix" checked>
+                                <span>Confusion Matrix</span>
+                            </label>
+                            <p class="setting-description">Heatmap showing true positives, false positives, true negatives, false negatives</p>
+                        </div>
+                        
+                        <div class="setting-item chart-option" data-keywords="roc curve auc area under curve classification">
+                            <label class="setting-label">
+                                <input type="checkbox" id="chart-roc-curve" checked>
+                                <span>ROC Curve (Area Under Curve)</span>
+                            </label>
+                            <p class="setting-description">Receiver Operating Characteristic curve showing model performance. Higher AUC = better</p>
+                        </div>
+                        
+                        <h4 style="color: var(--accent); margin-top: 20px;">Clustering Charts</h4>
+                        
+                        <div class="setting-item chart-option" data-keywords="cluster scatter plot unsupervised clustering">
+                            <label class="setting-label">
+                                <input type="checkbox" id="chart-cluster-scatter" checked>
+                                <span>Cluster Scatter Plot</span>
+                            </label>
+                            <p class="setting-description">2D visualization of data points colored by cluster assignment</p>
+                        </div>
+                        
+                        <h4 style="color: var(--accent); margin-top: 20px;">Dimensionality Reduction Charts</h4>
+                        
+                        <div class="setting-item chart-option" data-keywords="scree plot pca variance explained">
+                            <label class="setting-label">
+                                <input type="checkbox" id="chart-scree-plot" checked>
+                                <span>Scree Plot (PCA)</span>
+                            </label>
+                            <p class="setting-description">Shows variance explained by each principal component</p>
+                        </div>
+                        
+                        <div class="setting-item chart-option" data-keywords="transformed scatter pca dimensionality reduction">
+                            <label class="setting-label">
+                                <input type="checkbox" id="chart-transformed-scatter" checked>
+                                <span>Transformed Data Scatter (PCA)</span>
+                            </label>
+                            <p class="setting-description">2D visualization of data after dimensionality reduction</p>
+                        </div>
+                    </div>
+                    </div>
+
+                    <!-- Storage & Paths Tab -->
+                    <div class="settings-tab" id="settings-tab-storage">
+                    <div class="settings-section">
+                        <h3>Storage Locations</h3>
+                        <p class="setting-description" style="margin-bottom: 20px;">
+                            View and configure where ML-Suite stores data, models, and cached files
+                        </p>
+                        
+                        <div class="storage-info">
+                            <h4>Current Storage Paths</h4>
+                            <div class="path-display">
+                                <label>Uploaded Files:</label>
+                                <code id="path-uploads">./uploads/</code>
+                                <button class="btn btn-secondary btn-sm" onclick="copyToClipboard(document.getElementById('path-uploads').textContent)">Copy</button>
+                            </div>
+                            <div class="path-display">
+                                <label>Trained Models:</label>
+                                <code id="path-models">./models/</code>
+                                <button class="btn btn-secondary btn-sm" onclick="copyToClipboard(document.getElementById('path-models').textContent)">Copy</button>
+                            </div>
+                            <div class="path-display">
+                                <label>Cache Directory:</label>
+                                <code id="path-cache">~/.cache/huggingface/</code>
+                                <button class="btn btn-secondary btn-sm" onclick="copyToClipboard(document.getElementById('path-cache').textContent)">Copy</button>
+                            </div>
+                        </div>
+                        
+                        <div class="storage-info" style="margin-top: 30px;">
+                            <h4>Configure Custom Paths</h4>
+                            <p class="setting-description">Set custom locations for data storage (requires restart)</p>
+                            
+                            <div class="setting-item">
+                                <label class="setting-label">
+                                    <span>Custom Upload Directory</span>
+                                </label>
+                                <input type="text" id="custom-uploads-path" class="terminal-input" placeholder="./uploads/">
+                                <p class="setting-description">Where uploaded CSVs and images are stored</p>
+                            </div>
+                            
+                            <div class="setting-item">
+                                <label class="setting-label">
+                                    <span>Custom Models Directory</span>
+                                </label>
+                                <input type="text" id="custom-models-path" class="terminal-input" placeholder="./models/">
+                                <p class="setting-description">Where trained models are saved</p>
+                            </div>
+                            
+                            <button class="btn btn-primary" id="save-paths-btn">Save Paths</button>
+                <p class="setting-description" style="margin-top: 10px; color: var(--warning);">
+                    ⚠️ Changing paths requires Flask restart to take effect
+                </p>
+                        </div>
+                        
+                        <div class="storage-info" style="margin-top: 30px;">
+                            <h4>Storage Usage</h4>
+                            <div id="storage-usage-display">
+                                <p>Loading storage information...</p>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+
+                    <!-- Save/Reset Buttons (shown on all tabs) -->
+                    <div class="settings-section">
+                        <button class="btn btn-primary" id="save-settings-btn">Save Settings</button>
+                        <button class="btn btn-secondary" id="reset-settings-btn">Reset to Defaults</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/notebook_export.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
+
