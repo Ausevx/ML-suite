@@ -14,6 +14,7 @@ models/*.pkl
 models/*.json
 uploads/*
 *.csv
+!test_datasets/*.csv
 *.ipynb
 
 # IDE

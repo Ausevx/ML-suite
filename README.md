@@ -107,6 +107,8 @@ ml-suite/
 3. **Export Notebooks**: Download complete Jupyter notebooks with training code and visualizations
 4. **OCR**: Upload images/PDFs to extract text
 
+**Demo Dataset**: Sample credit card fraud dataset for classification available in `test_datasets/creditcard_sample.csv`
+
 ## Troubleshooting
 
 - **Tesseract not found**: Add to system PATH or reinstall
