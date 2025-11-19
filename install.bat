@@ -56,7 +56,7 @@ python -m pip install --upgrade pip setuptools wheel
 REM Install Python dependencies
 echo.
 echo Installing Python dependencies...
-pip install -r requirements.txt
+pip install -r backend\requirements.txt
 
 echo.
 echo ============================
@@ -64,7 +64,7 @@ echo Installation complete!
 echo.
 echo To run the application:
 echo   1. Activate the virtual environment: venv\Scripts\activate.bat
-echo   2. Run: python app.py
+echo   2. Run: python backend\app.py
 echo   3. Open http://localhost:5000 in your browser
 echo.
 pause

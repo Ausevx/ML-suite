@@ -65,7 +65,7 @@ python -m pip install --upgrade pip setuptools wheel
 # Install Python dependencies
 Write-Host ""
 Write-Host "Installing Python dependencies..." -ForegroundColor Cyan
-pip install -r requirements.txt
+pip install -r backend/requirements.txt
 
 Write-Host ""
 Write-Host "============================" -ForegroundColor Cyan
@@ -73,7 +73,7 @@ Write-Host "Installation complete!" -ForegroundColor Green
 Write-Host ""
 Write-Host "To run the application:" -ForegroundColor Yellow
 Write-Host "  1. Activate the virtual environment: .\venv\Scripts\Activate.ps1"
-Write-Host "  2. Run: python app.py"
+Write-Host "  2. Run: python backend/app.py"
 Write-Host "  3. Open http://localhost:5000 in your browser"
 Write-Host ""
 
