@@ -63,7 +63,7 @@ Open `http://localhost:5000` in your browser.
 ### 🔍 OCR Module
 Extract text from images and PDFs using Tesseract OCR. Simply drag and drop your files and get instant text extraction.
 
-![OCR Interface](screenshots/ocr-interface.png)
+![OCR Interface](images/ocr-interface.png)
 
 *Upload images or PDFs and extract text with one click*
 
@@ -77,7 +77,7 @@ Train machine learning models with an intuitive interface. Supports regression, 
 4. **Configure Parameters** - Set hyperparameters or use auto-tuning
 5. **Train & Evaluate** - Get performance metrics, visualizations, and downloadable models
 
-![Model Training Interface](screenshots/model-training.png)
+![Model Training Interface](images/model-training.png)
 
 *Complete ML workflow from data upload to trained model*
 
@@ -96,21 +96,21 @@ Clean and prepare your data for optimal model performance with built-in preproce
 - **Scale Features**: Standardize or normalize numerical features
 - **Encode Categories**: Convert categorical variables to numerical format
 
-![Data Preprocessing](screenshots/data-preprocessing.png)
+![Data Preprocessing](images/data-preprocessing.png)
 
 *Smart data cleaning and feature selection for better model results*
 
 ### 🎯 Hyperparameter Tuning
 Optimize model performance with automated hyperparameter tuning using Grid Search, Random Search, or Bayesian Optimization.
 
-![Hyperparameter Tuning](screenshots/hyperparameter-tuning.png)
+![Hyperparameter Tuning](images/hyperparameter-tuning.png)
 
 *Automated parameter optimization for better model performance*
 
 ### 🎨 Customizable Themes
 Choose from multiple themes including retro terminal styles with CRT effects and modern light themes.
 
-![Theme Selection](screenshots/themes.png)
+![Theme Selection](images/themes.png)
 
 *8 different themes from classic terminal to modern light*
 
@@ -120,35 +120,9 @@ View, download, and manage all your trained models. Export complete Jupyter note
 ### 📝 Notebook Export
 Generate fully functional Jupyter notebooks with your complete ML workflow, including data preprocessing, model training, and evaluation plots.
 
-## Screenshots & Screen Recordings
+## Screen Recording
 
-*Note: Visual demos will be added to the `screenshots/` directory. You can include both static screenshots and animated GIFs/screen recordings:*
-
-### 📸 Screenshots:
-- Run the application locally
-- Take screenshots of key interfaces
-- Save them in a `screenshots/` folder in the project root
-
-### 🎬 Screen Recordings (Recommended):
-For better demonstrations, consider adding animated GIFs showing workflows:
-- **Tools**: Use tools like OBS Studio, ScreenToGif, or Loom
-- **Format**: GIFs (under 5MB) or link to short videos
-- **Content**: Show complete workflows (upload → process → results)
-- **File naming**: `ocr-demo.gif`, `training-workflow.gif`, `preprocessing-demo.gif`
-
-Example:
-```markdown
-![Model Training Demo](screenshots/training-workflow.gif)
-```
-
-*Screen recordings help users understand complex workflows much better than static images!*
-
-### 🎯 Recommended Recordings:
-- **OCR Demo**: Upload image → extract text → show results
-- **Model Training Workflow**: Upload CSV → select features/target → train model → view results
-- **Preprocessing**: Show data cleaning → feature selection → preparation steps
-- **Hyperparameter Tuning**: Demonstrate different optimization methods
-- **Theme Switching**: Show different UI themes in action
+A screen recording is attached for help and understanding of the application's features and workflows.
 
 ## Project Structure
 
