@@ -28,6 +28,13 @@
         <div class="stat-bar">
             <div class="stat-bar-fill" id="ram-bar" style="width: 0%"></div>
         </div>
+        <div id="gpu-section" class="stat-row" style="margin-top: 8px; display: none;">
+            <span class="stat-label">GPU:</span>
+            <span class="stat-value" id="gpu-usage">0%</span>
+        </div>
+        <div id="gpu-bar-container" class="stat-bar" style="display: none;">
+            <div class="stat-bar-fill" id="gpu-bar" style="width: 0%; background-color: #ff00ff;"></div>
+        </div>
         <div class="stat-row" style="margin-top: 8px;">
             <span class="stat-label">Status:</span>
             <span class="stat-value" id="system-status">ONLINE</span>
@@ -232,9 +239,11 @@
                     <p>View, manage, and use trained models</p>
                 </div>
                 <div class="module-content">
-                    <div style="margin-bottom: 20px;">
+                    <div style="margin-bottom: 20px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
                         <button id="refresh-models-btn" class="btn btn-secondary">Refresh Models</button>
-                        <button id="load-model-btn" class="btn btn-primary" style="margin-left: 10px;">Load Model for Training</button>
+                        <button id="load-model-btn" class="btn btn-primary">Load Model for Training</button>
+                        <button id="select-all-models-btn" class="btn btn-secondary">Select All</button>
+                        <button id="delete-selected-models-btn" class="btn btn-danger" style="display: none;">Delete Selected (<span id="selected-count">0</span>)</button>
                     </div>
                     <div id="model-loader" style="display: none; margin-bottom: 20px;">
                         <h3>Load Model</h3>
@@ -407,6 +416,49 @@
                                 <option value="10000">Every 10 seconds (Minimal)</option>
                             </select>
                             <p class="setting-description">How often to update system statistics</p>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>GPU Acceleration</h3>
+                        <p class="setting-description" style="margin-bottom: 15px;">Configure GPU usage for faster model training</p>
+
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="setting-gpu-enabled" checked>
+                                <span>Enable GPU Acceleration</span>
+                            </label>
+                            <p class="setting-description">Use GPU for compatible models (XGBoost, Neural Networks)</p>
+                        </div>
+
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <input type="checkbox" id="setting-gpu-force-cpu">
+                                <span>Force CPU Usage</span>
+                            </label>
+                            <p class="setting-description">Disable GPU usage even when available (overrides above setting)</p>
+                        </div>
+
+                        <div class="setting-item">
+                            <label class="setting-label">
+                                <span>Preferred GPU Backend</span>
+                            </label>
+                            <select id="setting-gpu-preferred-backend" class="terminal-select" style="max-width: 300px;">
+                                <option value="auto" selected>Auto-detect (Recommended)</option>
+                                <option value="cuda">NVIDIA CUDA (Linux/Windows)</option>
+                                <option value="mps">Apple Silicon MPS (macOS)</option>
+                                <option value="cpu">CPU Only</option>
+                            </select>
+                            <p class="setting-description">Force specific GPU backend or disable GPU entirely</p>
+                        </div>
+
+                        <div class="setting-item">
+                            <div id="gpu-status-info" style="margin-top: 10px; padding: 10px; background: rgba(0,255,0,0.1); border: 1px solid #00ff00; border-radius: 4px;">
+                                <strong>GPU Status:</strong> <span id="gpu-status-text">Checking...</span>
+                                <p style="margin: 8px 0 0 0; font-size: 0.85em; opacity: 0.8;">
+                                    <em>Note: Apple Silicon (MPS) GPU utilization monitoring is limited. Check console logs to verify GPU usage during training.</em>
+                                </p>
+                            </div>
                         </div>
                     </div>
 

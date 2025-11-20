@@ -1,0 +1,82 @@
+{
+  "model_id": "1be6ace9-3591-4546-a29c-4e2d6c67dbf8",
+  "model_name": "50k-xgb-cpu-single",
+  "model_type": "xgboost",
+  "model_category": "regression",
+  "created_at": "2025-11-21T00:32:22.473063",
+  "dataset_name": "gpu_bench_large_50k.csv",
+  "features": [
+    "feature_1",
+    "feature_2",
+    "feature_3",
+    "feature_4",
+    "feature_5",
+    "feature_6",
+    "feature_7",
+    "feature_8",
+    "feature_9",
+    "feature_10",
+    "feature_11",
+    "feature_12",
+    "feature_13",
+    "feature_14",
+    "feature_15",
+    "feature_16",
+    "feature_17",
+    "feature_18",
+    "feature_19",
+    "feature_20"
+  ],
+  "target": "target",
+  "train_test_split": 0.83,
+  "metrics": {
+    "r2_score": 0.9721716666494373,
+    "rmse": 0.7338971946289832,
+    "mae": 0.5442820029078371,
+    "mse": 0.5386050922842915,
+    "adjusted_r2": 0.9721060337877615
+  },
+  "file_path": "/Users/aditya/workspace/ML-suite-1/backend/models/1be6ace9-3591-4546-a29c-4e2d6c67dbf8.pkl",
+  "coefficients": {
+    "feature_1": 0.03592124953866005,
+    "feature_2": 0.014390993863344193,
+    "feature_3": 0.02381698042154312,
+    "feature_4": 0.02270386926829815,
+    "feature_5": 0.07219082862138748,
+    "feature_6": 0.041006434708833694,
+    "feature_7": 0.035274017602205276,
+    "feature_8": 0.04851509630680084,
+    "feature_9": 0.05789557844400406,
+    "feature_10": 0.0215184073895216,
+    "feature_11": 0.06659578531980515,
+    "feature_12": 0.023942584171891212,
+    "feature_13": 0.1660156399011612,
+    "feature_14": 0.02178117260336876,
+    "feature_15": 0.05201157554984093,
+    "feature_16": 0.16112016141414642,
+    "feature_17": 0.041091471910476685,
+    "feature_18": 0.05360914021730423,
+    "feature_19": 0.022132789716124535,
+    "feature_20": 0.0184662826359272
+  },
+  "intercept": [
+    6.019719123840332
+  ],
+  "preprocessing": {
+    "removed_duplicates": false,
+    "missing_value_strategies": {},
+    "dropped_columns": [],
+    "encoded_columns": {},
+    "original_feature_count": 20,
+    "original_row_count": 50000,
+    "final_row_count": 50000,
+    "final_feature_count": 20
+  },
+  "label_classes": null,
+  "training_time": 105.26,
+  "hardware_used": {
+    "device": "cpu",
+    "backend": "cpu",
+    "gpu_accelerated": false
+  }
+}

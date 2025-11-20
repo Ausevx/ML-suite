@@ -36,3 +36,12 @@ OCR_ENGINE = 'pytesseract'  # or 'easyocr'
 # Text Generation Configuration
 TEXT_MODEL_NAME = 'google/flan-t5-small'  # Lightweight model for local use
 
+# GPU Configuration
+GPU_ENABLED = True  # Master switch for GPU acceleration
+GPU_FORCE_CPU = False  # Force CPU usage even if GPU is available
+GPU_PREFERRED_BACKEND = 'auto'  # 'auto', 'cuda', 'mps', or 'cpu'
+
+# CPU Configuration
+CPU_N_JOBS = -1  # Number of CPU cores to use (-1 = all cores, 1 = single core, 4 = 4 cores)
+# Note: Using all cores (-1) can cause warnings on some systems. Try 4 or 8 if you see warnings.
+

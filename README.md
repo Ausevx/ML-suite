@@ -6,12 +6,13 @@ Local desktop ML application with OCR, model training, and comprehensive ML work
 
 - **OCR Module**: Extract text from images and PDFs
 - **Model Trainer**: Train regression, classification, clustering, and PCA models with visual interface
-- **Model Management**: Save, load, download, and manage trained models
+- **GPU Acceleration**: Automatic GPU support for Neural Networks (Apple Silicon MPS, NVIDIA CUDA)
+- **Model Management**: Save, load, download, and manage trained models with training times
 - **Hyperparameter Tuning**: Grid Search, Random Search, Bayesian Optimization
 - **Visualizations**: Matplotlib charts (ROC, confusion matrix, residuals, feature importance, etc.)
 - **Notebook Export**: Generate Jupyter notebooks with complete training code and visualizations
-- **Console/Logs**: Real-time logging with filtering
-- **System Monitoring**: CPU and RAM usage tracking
+- **Console/Logs**: Real-time logging with filtering and hardware usage tracking
+- **System Monitoring**: CPU, RAM, and GPU usage tracking
 - **Customizable Themes**: 8 terminal themes with CRT effects and light modern theme
 
 ## Quick Start
@@ -56,7 +57,13 @@ venv\Scripts\activate.bat  # Windows
 python backend/app.py
 ```
 
+** GPU Acceleration:**
+- See [GPU Setup Guide](gpu_support/GPU_SETUP_GUIDE.md) for detailed instructions
+- Supports Apple Silicon, NVIDIA, and AMD GPUs
+
 Open `http://localhost:5000` in your browser.
+
+
 
 ## Features Overview
 
@@ -81,7 +88,7 @@ Train machine learning models with an intuitive interface. Supports regression, 
 
 *Complete ML workflow from data upload to trained model*
 
-### 🧹 Data Preprocessing & Feature Selection
+### Data Preprocessing & Feature Selection
 Clean and prepare your data for optimal model performance with built-in preprocessing tools.
 
 #### Feature & Target Selection:
@@ -100,14 +107,14 @@ Clean and prepare your data for optimal model performance with built-in preproce
 
 *Smart data cleaning and feature selection for better model results*
 
-### 🎯 Hyperparameter Tuning
+###  Hyperparameter Tuning
 Optimize model performance with automated hyperparameter tuning using Grid Search, Random Search, or Bayesian Optimization.
 
 ![Hyperparameter Tuning](images/hyperparameter-tuning.png)
 
 *Automated parameter optimization for better model performance*
 
-### 🎨 Customizable Themes
+###  Customizable Themes
 Choose from multiple themes including retro terminal styles with CRT effects and modern light themes.
 
 ![Theme Selection](images/themes.png)
@@ -117,10 +124,10 @@ Choose from multiple themes including retro terminal styles with CRT effects and
 ### 📊 Model Management
 View, download, and manage all your trained models. Export complete Jupyter notebooks with training code and visualizations.
 
-### 📝 Notebook Export
+###  Notebook Export
 Generate fully functional Jupyter notebooks with your complete ML workflow, including data preprocessing, model training, and evaluation plots.
 
-## Screen Recording
+## Demo
 
 A screen recording is attached for help and understanding of the application's features and workflows.
 
@@ -142,8 +149,52 @@ A screen recording is attached for help and understanding of the application's f
 3. **Train a model**: Use the sample dataset in `test_datasets/creditcard_sample.csv`
 4. **Explore features**: Switch between modules using the sidebar navigation
 
-### Sample Dataset
-A credit card fraud detection dataset is included in `test_datasets/creditcard_sample.csv` - perfect for trying classification models.
+### Sample Datasets
+
+**Included:**
+- `test_datasets/creditcard_sample.csv` - Credit card fraud detection (classification)
+
+**Generate GPU Benchmarks:**
+```bash
+cd test_datasets
+python generate_benchmark_datasets.py
+```
+
+This creates datasets from 500 to 100K rows for testing GPU vs CPU performance.
+
+### 🚀 GPU Acceleration
+
+ML-Suite automatically uses GPU when beneficial for faster training.
+
+**Supported Platforms:**
+- ✅ **Apple Silicon** (M1/M2/M3/M4) - MPS acceleration for Neural Networks
+- ✅ **NVIDIA GPUs** - CUDA acceleration for Neural Networks & XGBoost
+- ✅ **AMD GPUs** - ROCm acceleration for Neural Networks (Linux only)
+
+**Quick Setup:**
+```bash
+# Apple Silicon (M1/M2/M3)
+pip install torch torchvision torchaudio xgboost
+
+# NVIDIA GPU
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+pip install xgboost nvidia-ml-py3
+
+# AMD GPU (Linux)
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.7
+pip install xgboost
+```
+
+📖 **[Complete GPU Setup Guide](gpu_support/GPU_SETUP_GUIDE.md)** - Detailed instructions for all platforms
+
+**Performance Notes:**
+- **First Run**: May be slow (cold start overhead)
+- **Later Runs**: Much faster (warm cache)
+- **Small Datasets** (< 5K rows): CPU may be faster
+- **Large Datasets** (50K+ rows): GPU shows 2-10x speedup
+- **Verify**: Check console logs for `[GPU]` or `[CPU]` tags
+
+
 
 ## Troubleshooting
 

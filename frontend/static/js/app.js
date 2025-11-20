@@ -20,6 +20,9 @@ const appState = {
         theme: 'amber',
         crtCurvature: false,
         crtBrightness: 100,
+        gpuEnabled: true,
+        gpuForceCpu: false,
+        gpuPreferredBackend: 'auto',
         showMetrics: {
             r2Score: true,
             rmse: true,
@@ -145,6 +148,26 @@ async function updateSystemStats() {
         // Update RAM
         document.getElementById('ram-usage').textContent = `${data.ram.percent.toFixed(1)}%`;
         document.getElementById('ram-bar').style.width = `${data.ram.percent}%`;
+
+        // Update GPU if available
+        const gpuUsageElement = document.getElementById('gpu-usage');
+        const gpuBarElement = document.getElementById('gpu-bar');
+        const gpuSection = document.getElementById('gpu-section');
+        const gpuBarContainer = document.getElementById('gpu-bar-container');
+        
+        if (data.gpu && data.gpu.available && gpuUsageElement && gpuBarElement) {
+            const gpuUtil = data.gpu.utilization || 0;
+            gpuUsageElement.textContent = `${gpuUtil.toFixed(1)}%`;
+            gpuBarElement.style.width = `${gpuUtil}%`;
+            
+            // Show GPU section
+            if (gpuSection) gpuSection.style.display = 'flex';
+            if (gpuBarContainer) gpuBarContainer.style.display = 'block';
+        } else {
+            // Hide GPU section if not available
+            if (gpuSection) gpuSection.style.display = 'none';
+            if (gpuBarContainer) gpuBarContainer.style.display = 'none';
+        }
         
         // Update status
         document.getElementById('system-status').textContent = data.status.toUpperCase();
@@ -1098,6 +1121,21 @@ async function startTraining() {
             progressContainer.innerHTML = '<div class="success-message">Training completed!</div>';
             displayTrainingResults(data);
             
+            // Log hardware info
+            let hardwareInfo = 'CPU';
+            if (data.hardware_info) {
+                if (data.hardware_info.gpu_accelerated) {
+                    const backend = data.hardware_info.gpu_backend || data.hardware_info.device_used;
+                    hardwareInfo = `GPU (${backend.toUpperCase()})`;
+                    if (data.hardware_info.gpu_memory_used) {
+                        hardwareInfo += ` | Memory: ${data.hardware_info.gpu_memory_used}GB`;
+                    }
+                }
+            }
+            
+            const trainingTime = data.training_time ? `${data.training_time}s` : '';
+            logToConsole(`Training Hardware: ${hardwareInfo} ${trainingTime ? `| Time: ${trainingTime}` : ''}`, 'info');
+            
             // Log success with appropriate metric
             let metricInfo = '';
             if (data.metrics.r2_score !== undefined) {
@@ -1394,6 +1432,90 @@ function initializeModelsModule() {
     document.getElementById('cancel-load-model-btn').addEventListener('click', () => {
         document.getElementById('model-loader').style.display = 'none';
     });
+    
+    // Bulk selection handlers
+    document.getElementById('select-all-models-btn').addEventListener('click', toggleSelectAll);
+    document.getElementById('delete-selected-models-btn').addEventListener('click', deleteSelectedModels);
+    
+    loadModels();
+}
+
+// Global state for selected models
+let selectedModels = new Set();
+
+function toggleSelectAll() {
+    const checkboxes = document.querySelectorAll('.model-checkbox');
+    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = !allChecked;
+        if (!allChecked) {
+            selectedModels.add(checkbox.dataset.modelId);
+        } else {
+            selectedModels.delete(checkbox.dataset.modelId);
+        }
+    });
+    
+    updateBulkDeleteButton();
+}
+
+function updateBulkDeleteButton() {
+    const deleteBtn = document.getElementById('delete-selected-models-btn');
+    const countSpan = document.getElementById('selected-count');
+    
+    if (selectedModels.size > 0) {
+        deleteBtn.style.display = 'inline-block';
+        countSpan.textContent = selectedModels.size;
+    } else {
+        deleteBtn.style.display = 'none';
+    }
+}
+
+async function deleteSelectedModels() {
+    if (selectedModels.size === 0) return;
+    
+    const confirmed = confirm(`Are you sure you want to delete ${selectedModels.size} model(s)? This action cannot be undone.`);
+    if (!confirmed) return;
+    
+    const deleteBtn = document.getElementById('delete-selected-models-btn');
+    deleteBtn.disabled = true;
+    deleteBtn.textContent = 'Deleting...';
+    
+    let successCount = 0;
+    let failCount = 0;
+    
+    for (const modelId of selectedModels) {
+        try {
+            const response = await fetch(`/api/models/${modelId}`, {
+                method: 'DELETE'
+            });
+            
+            if (response.ok) {
+                successCount++;
+            } else {
+                failCount++;
+            }
+        } catch (error) {
+            failCount++;
+        }
+    }
+    
+    // Clear selection
+    selectedModels.clear();
+    
+    // Reset button
+    deleteBtn.disabled = false;
+    deleteBtn.textContent = `Delete Selected (0)`;
+    updateBulkDeleteButton();
+    
+    // Show result
+    if (failCount === 0) {
+        logToConsole(`Successfully deleted ${successCount} model(s)`, 'success');
+    } else {
+        logToConsole(`Deleted ${successCount} model(s), failed to delete ${failCount}`, 'warning');
+    }
+    
+    // Reload models list
     loadModels();
 }
 
@@ -1530,18 +1652,29 @@ async function loadModels() {
         }
         
         container.innerHTML = '';
+        selectedModels.clear(); // Clear previous selection
+        updateBulkDeleteButton();
+        
         data.models.forEach(model => {
             const card = document.createElement('div');
             card.className = 'model-card';
             card.innerHTML = `
                 <div class="model-card-header">
-                    <div>
-                        <div class="model-card-title">${escapeHtml(model.model_name)}</div>
-                        <div class="model-card-meta">
-                            Type: ${model.model_type} | Created: ${new Date(model.created_at).toLocaleString()}
-                        </div>
-                        <div class="model-card-meta">
-                            Dataset: ${escapeHtml(model.dataset_name)}
+                    <div style="display: flex; align-items: flex-start; gap: 12px;">
+                        <input type="checkbox" class="model-checkbox" data-model-id="${model.model_id}" style="margin-top: 4px; cursor: pointer; width: 18px; height: 18px;">
+                        <div style="flex: 1;">
+                            <div class="model-card-title">${escapeHtml(model.model_name)}</div>
+                            <div class="model-card-meta">
+                                Type: ${model.model_type} | Created: ${new Date(model.created_at).toLocaleString()}
+                            </div>
+                            <div class="model-card-meta">
+                                Dataset: ${escapeHtml(model.dataset_name)}
+                            </div>
+                            ${model.training_time ? `
+                                <div class="model-card-meta">
+                                    ⏱️ Training: ${model.training_time}s ${model.hardware_used && model.hardware_used.gpu_accelerated ? `| 🚀 GPU (${model.hardware_used.backend.toUpperCase()})` : '| 💻 CPU'}
+                                </div>
+                            ` : ''}
                         </div>
                     </div>
                 </div>
@@ -1613,6 +1746,17 @@ async function loadModels() {
                 </div>
             `;
             container.appendChild(card);
+            
+            // Add checkbox event listener
+            const checkbox = card.querySelector('.model-checkbox');
+            checkbox.addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    selectedModels.add(model.model_id);
+                } else {
+                    selectedModels.delete(model.model_id);
+                }
+                updateBulkDeleteButton();
+            });
         });
     } catch (error) {
         container.innerHTML = `<div class="error-message">Error loading models: ${error.message}</div>`;
@@ -1624,7 +1768,44 @@ async function viewModelDetails(modelId) {
         const response = await fetch(`/api/models/${modelId}`);
         const data = await response.json();
         
-        alert(`Model Details:\n\nName: ${data.model_name}\nType: ${data.model_type}\nCreated: ${data.created_at}\nFeatures: ${data.features.join(', ')}\nTarget: ${data.target}\nR²: ${data.metrics.r2_score}\nRMSE: ${data.metrics.rmse}\nMAE: ${data.metrics.mae}`);
+        // Build details string based on available data
+        let details = `Model Details:\n\n`;
+        details += `Name: ${data.model_name}\n`;
+        details += `Type: ${data.model_type}\n`;
+        details += `Created: ${new Date(data.created_at).toLocaleString()}\n`;
+        
+        // Training info
+        if (data.training_time) {
+            details += `\nTraining Time: ${data.training_time}s\n`;
+            if (data.hardware_used && data.hardware_used.gpu_accelerated) {
+                details += `Hardware: GPU (${data.hardware_used.backend.toUpperCase()})\n`;
+            } else {
+                details += `Hardware: CPU\n`;
+            }
+        }
+        
+        // Dataset info
+        details += `\nDataset: ${data.dataset_name}\n`;
+        details += `Features: ${data.features.join(', ')}\n`;
+        details += `Target: ${data.target}\n`;
+        
+        // Metrics
+        details += `\nMetrics:\n`;
+        if (data.metrics.r2_score !== undefined) {
+            details += `  R²: ${data.metrics.r2_score.toFixed(4)}\n`;
+            if (data.metrics.rmse) details += `  RMSE: ${data.metrics.rmse.toFixed(4)}\n`;
+            if (data.metrics.mae) details += `  MAE: ${data.metrics.mae.toFixed(4)}\n`;
+        } else if (data.metrics.accuracy !== undefined) {
+            details += `  Accuracy: ${data.metrics.accuracy.toFixed(4)}\n`;
+            if (data.metrics.precision) details += `  Precision: ${data.metrics.precision.toFixed(4)}\n`;
+            if (data.metrics.recall) details += `  Recall: ${data.metrics.recall.toFixed(4)}\n`;
+            if (data.metrics.f1_score) details += `  F1 Score: ${data.metrics.f1_score.toFixed(4)}\n`;
+        } else if (data.metrics.n_clusters !== undefined) {
+            details += `  Clusters: ${data.metrics.n_clusters}\n`;
+            if (data.metrics.silhouette_score) details += `  Silhouette: ${data.metrics.silhouette_score.toFixed(4)}\n`;
+        }
+        
+        alert(details);
     } catch (error) {
         alert(`Error: ${error.message}`);
     }
@@ -2126,7 +2307,25 @@ function loadSettingsIntoUI() {
     if (statsFrequencySelect) {
         statsFrequencySelect.value = appState.settings.statsFrequency;
     }
-    
+
+    // GPU settings
+    const gpuEnabledCheckbox = document.getElementById('setting-gpu-enabled');
+    const gpuForceCpuCheckbox = document.getElementById('setting-gpu-force-cpu');
+    const gpuPreferredBackendSelect = document.getElementById('setting-gpu-preferred-backend');
+
+    if (gpuEnabledCheckbox) {
+        gpuEnabledCheckbox.checked = appState.settings.gpuEnabled !== false;
+    }
+    if (gpuForceCpuCheckbox) {
+        gpuForceCpuCheckbox.checked = appState.settings.gpuForceCpu || false;
+    }
+    if (gpuPreferredBackendSelect) {
+        gpuPreferredBackendSelect.value = appState.settings.gpuPreferredBackend || 'auto';
+    }
+
+    // Load GPU status
+    loadGpuStatus();
+
     // Theme selection
     document.querySelectorAll('.theme-card').forEach(card => {
         card.classList.remove('selected');
@@ -2236,7 +2435,25 @@ function saveSettings() {
     if (statsFrequencySelect) {
         appState.settings.statsFrequency = parseInt(statsFrequencySelect.value);
     }
-    
+
+    // GPU settings
+    const gpuEnabledCheckbox = document.getElementById('setting-gpu-enabled');
+    const gpuForceCpuCheckbox = document.getElementById('setting-gpu-force-cpu');
+    const gpuPreferredBackendSelect = document.getElementById('setting-gpu-preferred-backend');
+
+    if (gpuEnabledCheckbox) {
+        appState.settings.gpuEnabled = gpuEnabledCheckbox.checked;
+    }
+    if (gpuForceCpuCheckbox) {
+        appState.settings.gpuForceCpu = gpuForceCpuCheckbox.checked;
+    }
+    if (gpuPreferredBackendSelect) {
+        appState.settings.gpuPreferredBackend = gpuPreferredBackendSelect.value;
+    }
+
+    // Save GPU settings to backend
+    saveGpuSettingsToBackend();
+
     // Theme (already set by card click)
     
     // Training metrics
@@ -2356,5 +2573,68 @@ function copyToClipboard(text) {
     }).catch(err => {
         console.error('Failed to copy:', err);
     });
+}
+
+// GPU Settings Functions
+async function loadGpuStatus() {
+    try {
+        const response = await fetch('/api/system/stats');
+        const data = await response.json();
+        
+        const statusElement = document.getElementById('gpu-status-text');
+        if (!statusElement) return;
+        
+        if (data.gpu && data.gpu.available) {
+            let statusText = `✓ Available (${data.gpu.gpu_backend.toUpperCase()})`;
+            if (data.gpu.devices && data.gpu.devices.length > 0) {
+                const device = data.gpu.devices[0];
+                if (device.type === 'cuda') {
+                    statusText += ` - ${device.name}`;
+                } else if (device.type === 'mps') {
+                    statusText += ` - Apple Silicon`;
+                }
+            }
+            statusElement.textContent = statusText;
+            statusElement.style.color = '#00ff00';
+        } else {
+            statusElement.textContent = '✗ Not Available (CPU Only)';
+            statusElement.style.color = '#ffaa00';
+        }
+    } catch (error) {
+        console.error('Failed to load GPU status:', error);
+        const statusElement = document.getElementById('gpu-status-text');
+        if (statusElement) {
+            statusElement.textContent = 'Error checking GPU status';
+            statusElement.style.color = '#ff0000';
+        }
+    }
+}
+
+async function saveGpuSettingsToBackend() {
+    try {
+        const settings = {
+            gpu_enabled: appState.settings.gpuEnabled !== false,
+            gpu_force_cpu: appState.settings.gpuForceCpu || false,
+            gpu_preferred_backend: appState.settings.gpuPreferredBackend || 'auto'
+        };
+
+        const response = await fetch('/api/system/gpu/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(settings)
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            console.log('GPU settings saved:', data.settings);
+            // Reload GPU status after saving
+            setTimeout(() => loadGpuStatus(), 500);
+        } else {
+            console.error('Failed to save GPU settings:', data.error);
+        }
+    } catch (error) {
+        console.error('Error saving GPU settings:', error);
+    }
 }
 

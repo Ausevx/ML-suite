@@ -1,3 +1,4 @@
+# Core Dependencies
 flask>=2.3.0
 flask-cors>=4.0.0
 scikit-learn>=1.4.0
@@ -14,4 +15,26 @@ Pillow>=10.1.0
 werkzeug>=2.3.7
 psutil>=5.9.0
 requests>=2.31.0
+
+# GPU Support - PyTorch (works on all platforms)
+# - Apple Silicon: Automatically uses MPS (Metal Performance Shaders)
+# - NVIDIA: Automatically uses CUDA if available (see gpu_support/GPU_SETUP_GUIDE.md)
+# - CPU: Falls back to CPU if no GPU detected
+torch>=2.0.0
+torchvision>=0.15.0
+torchaudio>=2.0.0
+
+# GPU Monitoring (optional but recommended)
+# - NVIDIA: Shows real-time GPU utilization
+# - Apple Silicon: Limited support (no real-time metrics)
+# - Safe to install on all systems (won't break if no NVIDIA GPU)
+nvidia-ml-py3>=7.352.0
+
+# Note: For NVIDIA GPU users, install CUDA-specific PyTorch for best performance:
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+#
+# For AMD GPU users (Linux only), install ROCm-specific PyTorch:
+# pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm5.7
+#
+# See gpu_support/GPU_SETUP_GUIDE.md for detailed GPU setup instructions
 

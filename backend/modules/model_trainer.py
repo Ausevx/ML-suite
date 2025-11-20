@@ -44,6 +44,84 @@ try:
 except ImportError:
     BAYESIAN_AVAILABLE = False
     print("Warning: Bayesian optimization not available. Install with: pip install scikit-optimize")
+
+# GPU support detection
+try:
+    import torch
+    PYTORCH_AVAILABLE = True
+
+    # Check for different GPU backends
+    CUDA_AVAILABLE = torch.cuda.is_available()
+    MPS_AVAILABLE = hasattr(torch.backends, 'mps') and torch.backends.mps.is_available()
+
+    # Check GPU configuration settings
+    import config
+    gpu_master_enabled = getattr(config, 'GPU_ENABLED', True)
+    gpu_force_cpu = getattr(config, 'GPU_FORCE_CPU', False)
+    gpu_preferred_backend = getattr(config, 'GPU_PREFERRED_BACKEND', 'auto')
+
+    # Determine GPU availability based on hardware and settings
+    hardware_gpu_available = CUDA_AVAILABLE or MPS_AVAILABLE
+
+    if not gpu_master_enabled or gpu_force_cpu:
+        GPU_AVAILABLE = False
+        GPU_BACKEND = 'cpu'
+        print("GPU acceleration disabled by configuration")
+    elif gpu_preferred_backend == 'cpu':
+        GPU_AVAILABLE = False
+        GPU_BACKEND = 'cpu'
+        print("GPU acceleration forced to CPU by configuration")
+    elif gpu_preferred_backend == 'cuda' and CUDA_AVAILABLE:
+        GPU_AVAILABLE = True
+        GPU_BACKEND = 'cuda'
+        print("GPU acceleration enabled: CUDA (preferred)")
+    elif gpu_preferred_backend == 'mps' and MPS_AVAILABLE:
+        GPU_AVAILABLE = True
+        GPU_BACKEND = 'mps'
+        print("GPU acceleration enabled: MPS (preferred)")
+    elif hardware_gpu_available:
+        GPU_AVAILABLE = True
+        GPU_BACKEND = 'cuda' if CUDA_AVAILABLE else 'mps'
+        print(f"GPU acceleration enabled: {GPU_BACKEND} (auto-detected)")
+    else:
+        GPU_AVAILABLE = False
+        GPU_BACKEND = 'cpu'
+        print("No GPU acceleration available")
+
+except ImportError:
+    PYTORCH_AVAILABLE = False
+    GPU_AVAILABLE = False
+    CUDA_AVAILABLE = False
+    MPS_AVAILABLE = False
+    GPU_BACKEND = 'cpu'
+
+# XGBoost GPU support detection (CUDA only, not MPS)
+try:
+    # Test XGBoost GPU support (only works with CUDA and respects GPU settings)
+    import xgboost as xgb
+    if CUDA_AVAILABLE and GPU_AVAILABLE and GPU_BACKEND == 'cuda':
+        test_model = xgb.XGBRegressor(tree_method='gpu_hist')
+        XGBOOST_GPU_AVAILABLE = True
+        print("XGBoost GPU support available and enabled")
+    else:
+        XGBOOST_GPU_AVAILABLE = False
+        if not CUDA_AVAILABLE:
+            print("XGBoost GPU support not available (no CUDA)")
+        elif not GPU_AVAILABLE:
+            print("XGBoost GPU support disabled by configuration")
+        else:
+            print("XGBoost GPU support not available (MPS backend)")
+except Exception as e:
+    XGBOOST_GPU_AVAILABLE = False
+    print(f"XGBoost GPU support not available: {e}")
+
+if GPU_AVAILABLE:
+    print("GPU acceleration available via PyTorch")
+if XGBOOST_GPU_AVAILABLE:
+    print("XGBoost GPU acceleration available")
+if not GPU_AVAILABLE and not XGBOOST_GPU_AVAILABLE:
+    print("GPU acceleration not available - using CPU only")
+
 import joblib
 import config
 from werkzeug.utils import secure_filename
@@ -57,6 +135,40 @@ trainer_bp = Blueprint('trainer', __name__)
 # Store uploaded datasets in memory (simple approach)
 _uploaded_datasets = {}
 
+def get_current_gpu_settings():
+    """Get current GPU settings from config (allows dynamic updates)"""
+    import config
+    return {
+        'gpu_enabled': getattr(config, 'GPU_ENABLED', True),
+        'gpu_force_cpu': getattr(config, 'GPU_FORCE_CPU', False),
+        'gpu_preferred_backend': getattr(config, 'GPU_PREFERRED_BACKEND', 'auto'),
+        'cuda_available': CUDA_AVAILABLE if PYTORCH_AVAILABLE else False,
+        'mps_available': MPS_AVAILABLE if PYTORCH_AVAILABLE else False
+    }
+
+def should_use_gpu():
+    """Determine if GPU should be used based on current settings"""
+    settings = get_current_gpu_settings()
+    
+    if not settings['gpu_enabled'] or settings['gpu_force_cpu']:
+        return False, 'cpu'
+    
+    preferred = settings['gpu_preferred_backend']
+    
+    if preferred == 'cpu':
+        return False, 'cpu'
+    elif preferred == 'cuda' and settings['cuda_available']:
+        return True, 'cuda'
+    elif preferred == 'mps' and settings['mps_available']:
+        return True, 'mps'
+    elif preferred == 'auto':
+        if settings['cuda_available']:
+            return True, 'cuda'
+        elif settings['mps_available']:
+            return True, 'mps'
+    
+    return False, 'cpu'
+
 def allowed_csv_file(filename):
     """Check if file is CSV"""
     return '.' in filename and \
@@ -64,13 +176,14 @@ def allowed_csv_file(filename):
 
 def get_model_category(model_type):
     """Determine the category of a model type"""
-    regression_models = ['linear_regression', 'ridge', 'lasso', 'polynomial', 
+    regression_models = ['linear_regression', 'ridge', 'lasso', 'polynomial',
                         'random_forest', 'gradient_boosting', 'xgboost', 'svr']
     classification_models = ['logistic_regression', 'random_forest_classifier',
                             'gradient_boosting_classifier', 'xgboost_classifier', 'svc']
     clustering_models = ['kmeans', 'dbscan', 'hierarchical']
     dim_reduction_models = ['pca']
-    
+    deep_learning_models = ['neural_network']
+
     if model_type in regression_models:
         return 'regression'
     elif model_type in classification_models:
@@ -79,6 +192,8 @@ def get_model_category(model_type):
         return 'clustering'
     elif model_type in dim_reduction_models:
         return 'dim_reduction'
+    elif model_type in deep_learning_models:
+        return 'regression'  # Neural network returns regression predictions
     else:
         return 'regression'  # default
 
@@ -712,6 +827,24 @@ def train_model():
         
         intercept = float(model.intercept_) if hasattr(model, 'intercept_') and np.isscalar(model.intercept_) else (model.intercept_.tolist() if hasattr(model, 'intercept_') else 0.0)
         
+        # Calculate training time early for metadata
+        training_time = time.time() - start_time
+        
+        # Get hardware info early for metadata
+        use_gpu, backend = should_use_gpu()
+        hardware_used = {
+            'device': 'cpu',
+            'backend': 'cpu',
+            'gpu_accelerated': False
+        }
+        
+        if model_type in ['xgboost', 'xgboost_classifier']:
+            if XGBOOST_GPU_AVAILABLE and use_gpu and backend == 'cuda':
+                hardware_used = {'device': 'gpu', 'backend': 'cuda', 'gpu_accelerated': True}
+        elif model_type == 'neural_network':
+            if use_gpu and PYTORCH_AVAILABLE:
+                hardware_used = {'device': 'gpu', 'backend': backend, 'gpu_accelerated': True}
+        
         metadata = {
             'model_id': model_id,
             'model_name': model_name,
@@ -727,7 +860,9 @@ def train_model():
             'coefficients': coefficients,
             'intercept': intercept,
             'preprocessing': preprocessing_steps,
-            'label_classes': label_classes
+            'label_classes': label_classes,
+            'training_time': round(training_time, 2),
+            'hardware_used': hardware_used
         }
         
         metadata_path = os.path.join(config.MODELS_DIR, f'{model_id}.json')
@@ -789,9 +924,37 @@ def train_model():
                 if X_transformed.shape[1] >= 2:
                     charts['transformedScatter'] = generate_transformed_scatter(X_transformed[:, :2])
         
-        # Calculate training time
+        # Calculate training time and hardware info
         training_time = time.time() - start_time
+
+        # Get hardware acceleration info (use dynamic settings check)
+        use_gpu, backend = should_use_gpu()
         
+        hardware_info = {
+            'device_used': 'cpu',
+            'gpu_accelerated': False,
+            'gpu_backend': None,
+            'gpu_memory_used': None
+        }
+
+        # Check if GPU was actually used for this model
+        if model_type in ['xgboost', 'xgboost_classifier']:
+            if XGBOOST_GPU_AVAILABLE and use_gpu and backend == 'cuda':
+                hardware_info['device_used'] = 'cuda'
+                hardware_info['gpu_accelerated'] = True
+                hardware_info['gpu_backend'] = 'cuda'
+        elif model_type == 'neural_network':
+            if use_gpu and PYTORCH_AVAILABLE:
+                hardware_info['gpu_accelerated'] = True
+                hardware_info['device_used'] = backend
+                hardware_info['gpu_backend'] = backend
+                # Try to get CUDA GPU memory info
+                if backend == 'cuda':
+                    try:
+                        hardware_info['gpu_memory_used'] = round(torch.cuda.memory_allocated() / (1024**3), 2)
+                    except:
+                        pass
+
         return jsonify({
             'model_id': model_id,
             'model_name': model_name,
@@ -806,6 +969,7 @@ def train_model():
             'custom_output': custom_output,
             'best_params': best_params if best_params else None,
             'training_time': round(training_time, 2),
+            'hardware_info': hardware_info,
             'success': True
         })
         
@@ -1019,12 +1183,30 @@ def create_model(model_type, params, X_train, X_test):
         n_estimators = params.get('n_estimators', 100)
         learning_rate = params.get('learning_rate', 0.1)
         max_depth = params.get('max_depth', 6)
+
+        # Check GPU settings dynamically
+        use_gpu, backend = should_use_gpu()
+        
+        # Use GPU acceleration if available and enabled
+        if XGBOOST_GPU_AVAILABLE and use_gpu and backend == 'cuda':
+            tree_method = 'gpu_hist'
+            print(f"[GPU] XGBoost using CUDA acceleration (gpu_hist)")
+        else:
+            tree_method = 'hist'
+            if not use_gpu:
+                print("[CPU] XGBoost using CPU (GPU disabled in settings)")
+            elif backend != 'cuda':
+                print(f"[CPU] XGBoost using CPU (XGBoost requires CUDA, current: {backend})")
+            else:
+                print("[CPU] XGBoost using CPU (CUDA not available)")
+
         model = xgb.XGBRegressor(
             n_estimators=n_estimators,
             learning_rate=learning_rate,
             max_depth=max_depth,
             random_state=42,
-            n_jobs=-1
+            tree_method=tree_method,
+            n_jobs=-1 if tree_method != 'gpu_hist' else None  # n_jobs not used with GPU
         )
     
     elif model_type == 'svr':
@@ -1065,12 +1247,30 @@ def create_model(model_type, params, X_train, X_test):
         n_estimators = params.get('n_estimators', 100)
         learning_rate = params.get('learning_rate', 0.1)
         max_depth = params.get('max_depth', 6)
+
+        # Check GPU settings dynamically
+        use_gpu, backend = should_use_gpu()
+        
+        # Use GPU acceleration if available and enabled
+        if XGBOOST_GPU_AVAILABLE and use_gpu and backend == 'cuda':
+            tree_method = 'gpu_hist'
+            print(f"[GPU] XGBoost Classifier using CUDA acceleration (gpu_hist)")
+        else:
+            tree_method = 'hist'
+            if not use_gpu:
+                print("[CPU] XGBoost Classifier using CPU (GPU disabled in settings)")
+            elif backend != 'cuda':
+                print(f"[CPU] XGBoost Classifier using CPU (XGBoost requires CUDA, current: {backend})")
+            else:
+                print("[CPU] XGBoost Classifier using CPU (CUDA not available)")
+
         model = xgb.XGBClassifier(
             n_estimators=n_estimators,
             learning_rate=learning_rate,
             max_depth=max_depth,
             random_state=42,
-            n_jobs=-1
+            tree_method=tree_method,
+            n_jobs=-1 if tree_method != 'gpu_hist' else None  # n_jobs not used with GPU
         )
     
     elif model_type == 'svc':
@@ -1097,7 +1297,94 @@ def create_model(model_type, params, X_train, X_test):
     elif model_type == 'pca':
         n_components = params.get('n_components', 2)
         model = PCA(n_components=n_components, random_state=42)
-    
+
+    # Deep Learning Models (PyTorch-based)
+    elif model_type == 'neural_network':
+        if not PYTORCH_AVAILABLE:
+            raise Exception("PyTorch not available. Please install: pip install torch torchvision torchaudio")
+
+        import torch.nn as nn
+        import torch.optim as optim
+
+        class SimpleNN(nn.Module):
+            def __init__(self, input_size, hidden_size=64, output_size=1):
+                super(SimpleNN, self).__init__()
+                self.layers = nn.Sequential(
+                    nn.Linear(input_size, hidden_size),
+                    nn.ReLU(),
+                    nn.Linear(hidden_size, hidden_size),
+                    nn.ReLU(),
+                    nn.Linear(hidden_size, output_size)
+                )
+
+            def forward(self, x):
+                return self.layers(x)
+
+        # This is a placeholder - we'll need to create a custom wrapper for PyTorch models
+        # For now, we'll create a sklearn-compatible interface
+        from sklearn.base import BaseEstimator, RegressorMixin
+
+        class PyTorchRegressor(BaseEstimator, RegressorMixin):
+            def __init__(self, hidden_size=64, epochs=100, learning_rate=0.001, batch_size=32):
+                self.hidden_size = hidden_size
+                self.epochs = epochs
+                self.learning_rate = learning_rate
+                self.batch_size = batch_size
+
+                # Check GPU settings dynamically
+                use_gpu, backend = should_use_gpu()
+                
+                if use_gpu:
+                    self.device = torch.device(backend)
+                    print(f"[GPU] Neural Network using {backend.upper()} acceleration")
+                else:
+                    self.device = torch.device('cpu')
+                    print(f"[CPU] Neural Network using CPU (GPU disabled in settings)")
+
+            def fit(self, X, y):
+                # Convert to tensors
+                X_tensor = torch.FloatTensor(X.values if hasattr(X, 'values') else X).to(self.device)
+                y_tensor = torch.FloatTensor(y.values if hasattr(y, 'values') else y).unsqueeze(1).to(self.device)
+
+                # Create model
+                self.model_ = SimpleNN(X.shape[1], self.hidden_size, 1).to(self.device)
+                criterion = nn.MSELoss()
+                optimizer = optim.Adam(self.model_.parameters(), lr=self.learning_rate)
+
+                # Training loop
+                self.model_.train()
+                for epoch in range(self.epochs):
+                    for i in range(0, len(X_tensor), self.batch_size):
+                        batch_X = X_tensor[i:i+self.batch_size]
+                        batch_y = y_tensor[i:i+self.batch_size]
+
+                        optimizer.zero_grad()
+                        outputs = self.model_(batch_X)
+                        loss = criterion(outputs, batch_y)
+                        loss.backward()
+                        optimizer.step()
+
+                return self
+
+            def predict(self, X):
+                self.model_.eval()
+                X_tensor = torch.FloatTensor(X.values if hasattr(X, 'values') else X).to(self.device)
+                with torch.no_grad():
+                    predictions = self.model_(X_tensor).cpu().numpy().flatten()
+                return predictions
+
+        hidden_size = params.get('hidden_size', 64)
+        epochs = params.get('epochs', 100)
+        learning_rate = params.get('learning_rate', 0.001)
+        batch_size = params.get('batch_size', 32)
+
+        model = PyTorchRegressor(
+            hidden_size=hidden_size,
+            epochs=epochs,
+            learning_rate=learning_rate,
+            batch_size=batch_size
+        )
+
     else:
         # Default to linear regression
         model = LinearRegression()
@@ -1325,6 +1612,12 @@ def get_model_categories():
             'description': 'Reduce feature space while preserving information',
             'use_cases': 'Data visualization, feature extraction, noise reduction',
             'models': ['pca']
+        },
+        'deep_learning': {
+            'name': 'Deep Learning',
+            'description': 'Neural networks and advanced machine learning models',
+            'use_cases': 'Complex pattern recognition, image processing, sequential data',
+            'models': ['neural_network']
         }
     }
     
@@ -1525,6 +1818,23 @@ def get_available_models():
             'complexity': 'Low',
             'parameters': {
                 'n_components': {'type': 'int', 'default': 2, 'min': 1, 'max': 10, 'description': 'Number of components to keep'}
+            }
+        },
+
+        # Deep Learning Models
+        'neural_network': {
+            'name': 'Neural Network (PyTorch)',
+            'category': 'supervised_regression',
+            'description': 'Deep learning neural network for regression tasks',
+            'speed': 'Medium' if GPU_AVAILABLE else 'Slow',
+            'complexity': 'High',
+            'available': PYTORCH_AVAILABLE,
+            'gpu_accelerated': GPU_AVAILABLE,
+            'parameters': {
+                'hidden_size': {'type': 'int', 'default': 64, 'min': 16, 'max': 512, 'description': 'Number of neurons in hidden layers'},
+                'epochs': {'type': 'int', 'default': 100, 'min': 10, 'max': 1000, 'description': 'Number of training epochs'},
+                'learning_rate': {'type': 'float', 'default': 0.001, 'min': 0.0001, 'max': 0.1, 'description': 'Learning rate for optimization'},
+                'batch_size': {'type': 'int', 'default': 32, 'min': 8, 'max': 256, 'description': 'Batch size for training'}
             }
         }
     }

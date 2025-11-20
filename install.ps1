@@ -76,4 +76,9 @@ Write-Host "  1. Activate the virtual environment: .\venv\Scripts\Activate.ps1"
 Write-Host "  2. Run: python backend/app.py"
 Write-Host "  3. Open http://localhost:5000 in your browser"
 Write-Host ""
+Write-Host "GPU Support:" -ForegroundColor Cyan
+Write-Host "  - PyTorch with GPU support has been installed"
+Write-Host "  - NVIDIA GPU: See gpu_support\GPU_SETUP_GUIDE.md for CUDA setup"
+Write-Host "  - Test GPU: python test_gpu.py"
+Write-Host ""
 

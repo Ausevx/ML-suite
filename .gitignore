@@ -14,7 +14,10 @@ models/*.pkl
 models/*.json
 uploads/*
 *.csv
-!test_datasets/*.csv
+!test_datasets/creditcard_sample.csv
+!test_datasets/README_BENCHMARKS.md
+test_datasets/gpu_bench_*.csv
+test_datasets/gpu_bench_class_*.csv
 *.ipynb
 
 # IDE

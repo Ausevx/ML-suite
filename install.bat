@@ -67,5 +67,10 @@ echo   1. Activate the virtual environment: venv\Scripts\activate.bat
 echo   2. Run: python backend\app.py
 echo   3. Open http://localhost:5000 in your browser
 echo.
+echo GPU Support:
+echo   - PyTorch with GPU support has been installed
+echo   - NVIDIA GPU: See gpu_support\GPU_SETUP_GUIDE.md for CUDA setup
+echo   - Test GPU: python test_gpu.py
+echo.
 pause
 
