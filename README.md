@@ -14,35 +14,35 @@ Local desktop ML application with OCR, model training, and comprehensive ML work
 - **System Monitoring**: CPU and RAM usage tracking
 - **Customizable Themes**: 8 terminal themes with CRT effects and light modern theme
 
-## Requirements
+## Quick Start
 
+### Prerequisites
 - Python 3.8-3.13
-- Tesseract OCR
-- Poppler (for PDF support)
-- `libomp` (macOS only, for XGBoost)
+- Tesseract OCR (for text extraction)
+- Poppler (for PDF processing)
 
-## Quick Install
+### Install
 
-### macOS
+**macOS:**
 ```bash
 brew install tesseract poppler libomp
 ./install.sh
 ```
 
-### Linux (Ubuntu/Debian)
+**Linux (Ubuntu/Debian):**
 ```bash
 sudo apt-get update
 sudo apt-get install -y tesseract-ocr poppler-utils python3-pip python3-venv
 ./install.sh
 ```
 
-### Windows
+**Windows:**
 ```cmd
 choco install tesseract poppler -y
 install.bat
 ```
 
-Or use `install.ps1` for PowerShell.
+*Alternatively, use `install.ps1` for PowerShell.*
 
 ## Run
 
@@ -58,63 +58,125 @@ python backend/app.py
 
 Open `http://localhost:5000` in your browser.
 
-## Download Path Setup
+## Features Overview
 
-ML-Suite stores models and uploads in configurable directories. To use exported Jupyter notebooks:
+### 🔍 OCR Module
+Extract text from images and PDFs using Tesseract OCR. Simply drag and drop your files and get instant text extraction.
 
-1. **Check Storage Paths**:
-   - Go to Settings → Storage tab in the app
-   - Note the paths for "Models Directory" and "Uploads Directory"
+![OCR Interface](screenshots/ocr-interface.png)
 
-2. **Set Default Paths**:
-   - Default models: `./models/`
-   - Default uploads: `./uploads/`
+*Upload images or PDFs and extract text with one click*
 
-3. **Use in Exported Notebooks**:
-   - Each exported notebook has a configuration cell at the top:
-   ```python
-   # CONFIGURATION
-   DATA_PATH = 'your_data.csv'
-   MODEL_PATH = 'model_xyz.pkl'
-   ```
-   - Update `DATA_PATH` to your CSV location
-   - Update `MODEL_PATH` to the downloaded model path
-   - Example: `MODEL_PATH = '/Users/username/Downloads/model_20231215_123456.pkl'`
+### 🤖 Model Training
+Train machine learning models with an intuitive interface. Supports regression, classification, clustering, and dimensionality reduction.
 
-4. **Copy Paths**: Use the paths from Settings → Storage to ensure notebooks can locate models.
+#### How Model Training Works:
+1. **Upload CSV Data** - Drag and drop your dataset
+2. **Select Target & Features** - Choose what to predict and which columns to use
+3. **Pick Model Type** - Choose from 15+ algorithms including XGBoost, Random Forest, SVM
+4. **Configure Parameters** - Set hyperparameters or use auto-tuning
+5. **Train & Evaluate** - Get performance metrics, visualizations, and downloadable models
+
+![Model Training Interface](screenshots/model-training.png)
+
+*Complete ML workflow from data upload to trained model*
+
+### 🧹 Data Preprocessing & Feature Selection
+Clean and prepare your data for optimal model performance with built-in preprocessing tools.
+
+#### Feature & Target Selection:
+- **Target Variable**: Choose which column you want to predict (the "Y" variable)
+- **Feature Columns**: Select which columns to use as predictors (the "X" variables)
+- **Data Types**: Automatic detection of numerical vs categorical features
+- **Missing Values**: Handle missing data with various strategies (drop, fill, impute)
+
+#### Data Cleaning Options:
+- **Remove Duplicates**: Automatically identify and remove duplicate rows
+- **Handle Outliers**: Statistical methods to detect and treat outliers
+- **Scale Features**: Standardize or normalize numerical features
+- **Encode Categories**: Convert categorical variables to numerical format
+
+![Data Preprocessing](screenshots/data-preprocessing.png)
+
+*Smart data cleaning and feature selection for better model results*
+
+### 🎯 Hyperparameter Tuning
+Optimize model performance with automated hyperparameter tuning using Grid Search, Random Search, or Bayesian Optimization.
+
+![Hyperparameter Tuning](screenshots/hyperparameter-tuning.png)
+
+*Automated parameter optimization for better model performance*
+
+### 🎨 Customizable Themes
+Choose from multiple themes including retro terminal styles with CRT effects and modern light themes.
+
+![Theme Selection](screenshots/themes.png)
+
+*8 different themes from classic terminal to modern light*
+
+### 📊 Model Management
+View, download, and manage all your trained models. Export complete Jupyter notebooks with training code and visualizations.
+
+### 📝 Notebook Export
+Generate fully functional Jupyter notebooks with your complete ML workflow, including data preprocessing, model training, and evaluation plots.
+
+## Screenshots & Screen Recordings
+
+*Note: Visual demos will be added to the `screenshots/` directory. You can include both static screenshots and animated GIFs/screen recordings:*
+
+### 📸 Screenshots:
+- Run the application locally
+- Take screenshots of key interfaces
+- Save them in a `screenshots/` folder in the project root
+
+### 🎬 Screen Recordings (Recommended):
+For better demonstrations, consider adding animated GIFs showing workflows:
+- **Tools**: Use tools like OBS Studio, ScreenToGif, or Loom
+- **Format**: GIFs (under 5MB) or link to short videos
+- **Content**: Show complete workflows (upload → process → results)
+- **File naming**: `ocr-demo.gif`, `training-workflow.gif`, `preprocessing-demo.gif`
+
+Example:
+```markdown
+![Model Training Demo](screenshots/training-workflow.gif)
+```
+
+*Screen recordings help users understand complex workflows much better than static images!*
+
+### 🎯 Recommended Recordings:
+- **OCR Demo**: Upload image → extract text → show results
+- **Model Training Workflow**: Upload CSV → select features/target → train model → view results
+- **Preprocessing**: Show data cleaning → feature selection → preparation steps
+- **Hyperparameter Tuning**: Demonstrate different optimization methods
+- **Theme Switching**: Show different UI themes in action
 
 ## Project Structure
 
 ```
-ml-suite/
-├── backend/          # Flask application and modules
-│   ├── app.py
-│   ├── config.py
-│   ├── modules/
-│   └── requirements.txt
-├── frontend/         # HTML, CSS, JavaScript
-│   ├── static/
-│   └── templates/
-├── models/          # Saved models (auto-created)
-├── uploads/         # Uploaded files (auto-created)
-└── install.*        # Installation scripts
+├── backend/          # Flask API and ML modules
+├── frontend/         # Web interface (HTML/CSS/JS)
+├── models/           # Trained models (auto-created)
+├── uploads/          # Uploaded files (auto-created)
+├── test_datasets/    # Sample datasets
+└── install.*         # Platform-specific installers
 ```
 
-## Usage
+## Getting Started
 
-1. **Train Models**: Upload CSV → Select features/target → Choose model type → Train
-2. **Manage Models**: View, download, export notebooks, or delete trained models
-3. **Export Notebooks**: Download complete Jupyter notebooks with training code and visualizations
-4. **OCR**: Upload images/PDFs to extract text
+1. **Launch the app** and open `http://localhost:5000`
+2. **Try OCR**: Upload an image or PDF to extract text
+3. **Train a model**: Use the sample dataset in `test_datasets/creditcard_sample.csv`
+4. **Explore features**: Switch between modules using the sidebar navigation
 
-**Demo Dataset**: Sample credit card fraud dataset for classification available in `test_datasets/creditcard_sample.csv`
+### Sample Dataset
+A credit card fraud detection dataset is included in `test_datasets/creditcard_sample.csv` - perfect for trying classification models.
 
 ## Troubleshooting
 
-- **Tesseract not found**: Add to system PATH or reinstall
-- **XGBoost error (macOS)**: Install `libomp` via `brew install libomp`
-- **scikit-learn fails (Python 3.13)**: Run `pip install --upgrade pip setuptools wheel` first
-- **Port in use**: Change port in `backend/config.py`
+- **Tesseract not found**: Install Tesseract OCR and ensure it's in your system PATH
+- **XGBoost issues on macOS**: Install `libomp` with `brew install libomp`
+- **Port already in use**: The app runs on port 5000 by default. Change it in `backend/config.py` if needed
+- **Python dependency issues**: Try `pip install --upgrade pip setuptools wheel`
 
 ## License
 

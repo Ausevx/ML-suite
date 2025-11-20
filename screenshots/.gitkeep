@@ -1,0 +1,7 @@
+# This file ensures the screenshots directory is tracked by git
+# Add your UI screenshots here:
+# - ocr-interface.png
+# - model-training.png
+# - hyperparameter-tuning.png
+# - themes.png
+# - model-management.png
