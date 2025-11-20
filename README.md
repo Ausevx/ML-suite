@@ -74,7 +74,7 @@ Extract text from images and PDFs using Tesseract OCR. Simply drag and drop your
 
 *Upload images or PDFs and extract text with one click*
 
-### 🤖 Model Training
+###  Model Training
 Train machine learning models with an intuitive interface. Supports regression, classification, clustering, and dimensionality reduction.
 
 #### How Model Training Works:
@@ -162,14 +162,14 @@ python generate_benchmark_datasets.py
 
 This creates datasets from 500 to 100K rows for testing GPU vs CPU performance.
 
-### 🚀 GPU Acceleration
+###  GPU Acceleration
 
 ML-Suite automatically uses GPU when beneficial for faster training.
 
 **Supported Platforms:**
-- ✅ **Apple Silicon** (M1/M2/M3/M4) - MPS acceleration for Neural Networks
-- ✅ **NVIDIA GPUs** - CUDA acceleration for Neural Networks & XGBoost
-- ✅ **AMD GPUs** - ROCm acceleration for Neural Networks (Linux only)
+- **Apple Silicon** (M1/M2/M3/M4) - MPS acceleration for Neural Networks
+- **NVIDIA GPUs** - CUDA acceleration for Neural Networks & XGBoost
+- **AMD GPUs** - ROCm acceleration for Neural Networks (Linux only)
 
 **Quick Setup:**
 ```bash
