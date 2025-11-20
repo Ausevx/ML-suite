@@ -201,31 +201,160 @@ async function exportNotebook(modelId) {
             "source": [
                 `## Load Your Data\n`,
                 `\n`,
-                `Load your CSV dataset using the \`DATA_PATH\` configured above and prepare features${isRegression || isClassification ? ' and target' : ''}.`
+                `Load your CSV dataset using the \`DATA_PATH\` configured above.`
             ]
         });
         
-        let loadDataCode = [
-            `# Load your data\n`,
-            `df = pd.read_csv(DATA_PATH)\n`,
-            `\n`,
+        cells.push({
+            "cell_type": "code",
+            "execution_count": null,
+            "metadata": {},
+            "source": [
+                `# Load your data\n`,
+                `df = pd.read_csv(DATA_PATH)\n`,
+                `\n`,
+                `# Display basic information\n`,
+                `print(f"Dataset shape: {df.shape}")\n`,
+                `print(f"Columns: {list(df.columns)}")\n`,
+                `df.head()`
+            ]
+        });
+        
+        // Data Preprocessing Section
+        if (model.preprocessing) {
+            cells.push({
+                "cell_type": "markdown",
+                "metadata": {},
+                "source": [
+                    `## Data Preprocessing\n`,
+                    `\n`,
+                    `Apply the same preprocessing steps that were used during model training.`
+                ]
+            });
+            
+            let preprocessCode = [`# Data Preprocessing\n`, `\n`];
+            
+            // Handle duplicates
+            if (model.preprocessing.removed_duplicates) {
+                preprocessCode.push(
+                    `# Remove duplicate rows\n`,
+                    `print(f"Rows before removing duplicates: {len(df)}")\n`,
+                    `df = df.drop_duplicates()\n`,
+                    `print(f"Rows after removing duplicates: {len(df)}")\n`,
+                    `print(f"Duplicates removed: ${model.preprocessing.duplicates_removed_count || 0}")\n`,
+                    `\n`
+                );
+            }
+            
+            // Handle missing values
+            if (model.preprocessing.missing_value_strategies && Object.keys(model.preprocessing.missing_value_strategies).length > 0) {
+                preprocessCode.push(`# Handle missing values\n`);
+                
+                for (const [col, info] of Object.entries(model.preprocessing.missing_value_strategies)) {
+                    preprocessCode.push(`\n# Column: ${col} (${info.missing_count} missing values)\n`);
+                    
+                    if (info.strategy === 'drop') {
+                        preprocessCode.push(`df = df.dropna(subset=['${col}'])\n`);
+                    } else if (info.strategy === 'mean') {
+                        preprocessCode.push(`df['${col}'] = df['${col}'].fillna(df['${col}'].mean())\n`);
+                    } else if (info.strategy === 'median') {
+                        preprocessCode.push(`df['${col}'] = df['${col}'].fillna(df['${col}'].median())\n`);
+                    } else if (info.strategy === 'mode') {
+                        preprocessCode.push(`df['${col}'] = df['${col}'].fillna(df['${col}'].mode()[0] if not df['${col}'].mode().empty else 0)\n`);
+                    } else if (info.strategy === 'zero') {
+                        preprocessCode.push(`df['${col}'] = df['${col}'].fillna(0)\n`);
+                    }
+                }
+                preprocessCode.push(`\n`);
+            }
+            
+            // Handle target encoding for classification
+            if (model.preprocessing.encoded_columns && Object.keys(model.preprocessing.encoded_columns).length > 0) {
+                preprocessCode.push(`# Encode categorical columns\n`);
+                preprocessCode.push(`from sklearn.preprocessing import LabelEncoder\n`, `\n`);
+                
+                for (const [col, info] of Object.entries(model.preprocessing.encoded_columns)) {
+                    if (info.type === 'target') {
+                        preprocessCode.push(
+                            `# Encode target variable: ${col}\n`,
+                            `le_${col} = LabelEncoder()\n`,
+                            `le_${col}.classes_ = np.array(${JSON.stringify(info.classes)})\n`,
+                            `# Note: Original classes were: ${JSON.stringify(info.original_values)}\n`,
+                            `\n`
+                        );
+                    }
+                }
+            }
+            
+            // Report dropped columns
+            if (model.preprocessing.dropped_columns && model.preprocessing.dropped_columns.length > 0) {
+                preprocessCode.push(
+                    `# Note: The following columns were dropped during training (${model.preprocessing.drop_reason || 'non-numeric'}):\n`,
+                    `# ${model.preprocessing.dropped_columns.join(', ')}\n`,
+                    `\n`
+                );
+            }
+            
+            preprocessCode.push(
+                `print(f"Preprocessing complete. Final shape: {df.shape}")\n`
+            );
+            
+            cells.push({
+                "cell_type": "code",
+                "execution_count": null,
+                "metadata": {},
+                "source": preprocessCode
+            });
+        }
+        
+        // Prepare features and target
+        cells.push({
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                `## Prepare Features and Target\n`,
+                `\n`,
+                `Extract the features and target variable${isRegression || isClassification ? '' : ' (if applicable)'}.`
+            ]
+        });
+        
+        let prepareDataCode = [
             `# Prepare features\n`,
             `X = df[${JSON.stringify(model.features)}]\n`
         ];
         
         if (isRegression || isClassification) {
-            loadDataCode.push(
+            prepareDataCode.push(
                 `\n`,
                 `# Prepare target\n`,
                 `y = df['${model.target}']\n`
             );
+            
+            // Add encoding if needed
+            if (model.preprocessing && model.preprocessing.encoded_columns && model.preprocessing.encoded_columns[model.target]) {
+                prepareDataCode.push(
+                    `\n`,
+                    `# Encode target (if needed)\n`,
+                    `if y.dtype == 'object' or y.dtype.name == 'category':\n`,
+                    `    y = le_${model.target}.transform(y)\n`
+                );
+            }
+        }
+        
+        prepareDataCode.push(
+            `\n`,
+            `print(f"Features shape: {X.shape}")\n`
+        );
+        
+        if (isRegression || isClassification) {
+            prepareDataCode.push(`print(f"Target shape: {y.shape}")\n`);
         }
         
         cells.push({
             "cell_type": "code",
             "execution_count": null,
             "metadata": {},
-            "source": loadDataCode
+            "source": prepareDataCode
         });
         
         // Make predictions

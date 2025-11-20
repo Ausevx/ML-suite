@@ -390,34 +390,68 @@ def train_model():
             if col not in df.columns:
                 return jsonify({'error': f'Feature column "{col}" not found'}), 400
         
+        # Track preprocessing steps
+        preprocessing_steps = {
+            'removed_duplicates': remove_duplicates,
+            'missing_value_strategies': {},
+            'dropped_columns': [],
+            'encoded_columns': {},
+            'original_feature_count': len(feature_columns),
+            'original_row_count': len(df)
+        }
+        
         # Remove duplicates if requested
         if remove_duplicates:
+            initial_rows = len(df)
             df = df.drop_duplicates()
+            preprocessing_steps['duplicates_removed_count'] = initial_rows - len(df)
         
-        # Handle missing values
+        # Handle missing values and track strategies
         for col, strategy in missing_value_strategy.items():
             if col not in df.columns:
                 continue
             
+            missing_count = df[col].isnull().sum()
+            if missing_count > 0:
+                preprocessing_steps['missing_value_strategies'][col] = {
+                    'strategy': strategy,
+                    'missing_count': int(missing_count)
+                }
+            
             if strategy == 'drop':
                 df = df.dropna(subset=[col])
             elif strategy == 'mean':
-                df[col] = df[col].fillna(df[col].mean())
+                fill_value = df[col].mean()
+                df[col] = df[col].fillna(fill_value)
+                preprocessing_steps['missing_value_strategies'][col]['fill_value'] = float(fill_value)
             elif strategy == 'median':
-                df[col] = df[col].fillna(df[col].median())
+                fill_value = df[col].median()
+                df[col] = df[col].fillna(fill_value)
+                preprocessing_steps['missing_value_strategies'][col]['fill_value'] = float(fill_value)
             elif strategy == 'mode':
-                df[col] = df[col].fillna(df[col].mode()[0] if not df[col].mode().empty else 0)
+                fill_value = df[col].mode()[0] if not df[col].mode().empty else 0
+                df[col] = df[col].fillna(fill_value)
+                preprocessing_steps['missing_value_strategies'][col]['fill_value'] = float(fill_value)
             elif strategy == 'zero':
                 df[col] = df[col].fillna(0)
+                preprocessing_steps['missing_value_strategies'][col]['fill_value'] = 0
         
         # Determine model category
         model_category = get_model_category(model_type)
         
         # Prepare features and target
         X = df[feature_columns].select_dtypes(include=[np.number])
+        
+        # Track which columns were dropped (non-numeric)
+        dropped_cols = set(feature_columns) - set(X.columns)
+        if dropped_cols:
+            preprocessing_steps['dropped_columns'] = list(dropped_cols)
+            preprocessing_steps['drop_reason'] = 'non-numeric'
+        
         y = df[target_column]
         
         # Validate target based on model category
+        label_classes = None
         if model_category == 'regression':
             if not pd.api.types.is_numeric_dtype(y):
                 return jsonify({'error': 'Target column must be numeric for regression'}), 400
@@ -427,14 +461,25 @@ def train_model():
             if not pd.api.types.is_numeric_dtype(y):
                 from sklearn.preprocessing import LabelEncoder
                 le = LabelEncoder()
+                y_original = y.copy()
                 y = pd.Series(le.fit_transform(y), index=y.index)
                 # Store label encoder info for later
                 label_classes = list(le.classes_)
+                preprocessing_steps['encoded_columns'][target_column] = {
+                    'type': 'target',
+                    'encoding': 'LabelEncoder',
+                    'classes': label_classes,
+                    'original_values': list(y_original.unique())
+                }
             else:
                 label_classes = list(y.unique())
         elif model_category in ['clustering', 'dim_reduction']:
             # Unsupervised learning: no target needed (but we'll use it for visualization)
             pass
+        
+        # Track final dataset shape after preprocessing
+        preprocessing_steps['final_row_count'] = len(df)
+        preprocessing_steps['final_feature_count'] = len(X.columns)
         
         if len(X.columns) == 0:
             return jsonify({'error': 'No numeric feature columns available'}), 400
@@ -680,7 +725,9 @@ def train_model():
             'metrics': metrics,
             'file_path': model_path,
             'coefficients': coefficients,
-            'intercept': intercept
+            'intercept': intercept,
+            'preprocessing': preprocessing_steps,
+            'label_classes': label_classes
         }
         
         metadata_path = os.path.join(config.MODELS_DIR, f'{model_id}.json')
