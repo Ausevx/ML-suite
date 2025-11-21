@@ -193,6 +193,7 @@ pip install xgboost
 - **Small Datasets** (< 5K rows): CPU may be faster
 - **Large Datasets** (50K+ rows): GPU shows 2-10x speedup
 - **Verify**: Check console logs for `[GPU]` or `[CPU]` tags
+- **NOTE:** For Apple silicon, GPU acceleration might not provide faster computation because of multithreading compatibility issues with MPD and neural networks (PyTorch), which may need to be limited to a single thread.
 
 
 
