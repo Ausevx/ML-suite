@@ -1,0 +1,107 @@
+/* Storage Management Styles */
+.storage-info {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.storage-info h4 {
+    color: var(--accent);
+    margin-bottom: 15px;
+    font-size: 18px;
+}
+
+.path-display {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0;
+    padding: 10px;
+    background-color: rgba(0, 255, 0, 0.05);
+    border-radius: 4px;
+}
+
+.path-display label {
+    min-width: 150px;
+    color: var(--text-secondary);
+    font-weight: bold;
+}
+
+.path-display code {
+    flex: 1;
+    padding: 8px;
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    color: var(--accent);
+    font-size: 12px;
+    word-break: break-all;
+}
+
+.storage-stat {
+    padding: 10px;
+    margin: 5px 0;
+    border-left: 3px solid var(--accent);
+    padding-left: 15px;
+    background-color: rgba(0, 255, 0, 0.03);
+}
+
+.storage-stat strong {
+    color: var(--accent);
+    margin-right: 10px;
+}
+
+.terminal-textarea {
+    width: 100%;
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    padding: 10px;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    resize: vertical;
+    border-radius: 4px;
+}
+
+.terminal-textarea::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.6;
+}
+
+.terminal-textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+}
+
+.btn-sm {
+    padding: 5px 10px;
+    font-size: 12px;
+    min-width: auto;
+}
+
+/* Model Parameters Section */
+#model-parameters {
+    background-color: rgba(0, 255, 0, 0.03);
+    border: 1px solid var(--border);
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 15px;
+}
+
+#model-params-container .setting-item {
+    margin-bottom: 15px;
+}
+
+/* Custom Code Section */
+#custom-code-section {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: rgba(255, 180, 0, 0.05);
+    border: 1px solid var(--warning);
+    border-radius: 4px;
+}
+

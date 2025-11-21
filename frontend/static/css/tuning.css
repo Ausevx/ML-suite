@@ -1,0 +1,54 @@
+/* Hyperparameter Tuning Styles */
+
+#hyperparameter-tuning-section {
+    background-color: rgba(255, 180, 0, 0.05);
+    border: 1px solid var(--warning);
+    padding: 20px;
+    border-radius: 4px;
+    margin: 15px 0;
+}
+
+.tuning-warning {
+    background-color: rgba(255, 180, 0, 0.1);
+    border: 1px solid var(--warning);
+    padding: 15px;
+    border-radius: 4px;
+    margin-top: 15px;
+}
+
+.tuning-warning strong {
+    color: var(--warning);
+    display: block;
+    margin-bottom: 10px;
+}
+
+.tuning-warning ul {
+    margin: 10px 0 0 20px;
+    color: var(--text-secondary);
+}
+
+.tuning-warning li {
+    margin: 5px 0;
+    font-size: 14px;
+}
+
+/* Tuning progress indicator */
+.tuning-progress {
+    background-color: rgba(0, 255, 0, 0.05);
+    border: 1px solid var(--accent);
+    padding: 15px;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.tuning-progress .spinner {
+    display: inline-block;
+    margin-right: 10px;
+}
+
+.tuning-progress-text {
+    color: var(--accent);
+    font-size: 14px;
+    margin-top: 5px;
+}
+

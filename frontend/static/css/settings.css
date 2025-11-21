@@ -1,0 +1,242 @@
+/* Settings Module Styles */
+
+/* Settings Navigation Tabs */
+.settings-nav {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border);
+    overflow-x: auto;
+}
+
+.settings-nav-btn {
+    padding: 12px 20px;
+    background-color: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    transition: all 0.2s;
+    white-space: nowrap;
+}
+
+.settings-nav-btn:hover {
+    color: var(--text-primary);
+    background-color: rgba(0, 255, 0, 0.05);
+}
+
+.settings-nav-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    background-color: rgba(0, 255, 0, 0.1);
+}
+
+/* Settings Tab Content */
+.settings-tab {
+    display: none !important;
+}
+
+.settings-tab.active {
+    display: block !important;
+}
+
+.settings-section {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+}
+
+.settings-section h3 {
+    color: var(--accent);
+    margin-bottom: 20px;
+    font-size: 18px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+}
+
+.setting-item {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+}
+
+.setting-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+}
+
+.setting-label input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    cursor: pointer;
+    accent-color: var(--accent);
+}
+
+.setting-label span {
+    font-weight: 500;
+}
+
+.setting-description {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 5px 0 0 32px;
+    line-height: 1.4;
+}
+
+.settings-section button {
+    margin-right: 10px;
+    margin-top: 10px;
+}
+
+/* Setting alert messages */
+.settings-alert {
+    padding: 12px;
+    margin: 15px 0;
+    border-radius: 4px;
+    border: 1px solid;
+}
+
+.settings-alert.success {
+    background-color: rgba(63, 185, 80, 0.1);
+    border-color: var(--success);
+    color: var(--success);
+}
+
+.settings-alert.info {
+    background-color: rgba(88, 166, 255, 0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* Theme Grid */
+.theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.theme-card {
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.theme-card:hover {
+    transform: translateY(-5px);
+}
+
+.theme-card.selected .theme-preview {
+    box-shadow: 0 0 20px currentColor;
+    transform: scale(1.05);
+}
+
+.theme-preview {
+    padding: 20px;
+    border-radius: 4px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    transition: all 0.3s;
+    margin-bottom: 8px;
+}
+
+.theme-card p {
+    text-align: center;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Setting Slider */
+.setting-slider {
+    width: 100%;
+    max-width: 300px;
+    margin: 10px 0;
+    accent-color: var(--accent);
+}
+
+#brightness-value {
+    color: var(--accent);
+    margin-left: 10px;
+    font-weight: bold;
+}
+
+/* Model Cards */
+.model-card {
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    padding: 20px;
+    margin-bottom: 15px;
+    border-radius: 4px;
+    transition: all 0.3s;
+}
+
+.model-card:hover {
+    border-color: var(--accent);
+    box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+}
+
+.model-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.model-header h4 {
+    color: var(--accent);
+    margin: 0;
+}
+
+.model-badge {
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    background-color: rgba(128, 128, 128, 0.2);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+.model-badge.installed {
+    background-color: rgba(0, 255, 0, 0.1);
+    color: var(--success);
+    border-color: var(--success);
+}
+
+.model-info {
+    margin-bottom: 15px;
+}
+
+.model-info p {
+    color: var(--text-secondary);
+    margin: 0 0 10px 0;
+}
+
+.model-specs {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.model-specs span {
+    display: inline-block;
+}
+
+.restart-reminder code {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--warning);
+}
+

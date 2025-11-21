@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+.venv
+
+# Models and Data (runtime generated)
+backend/models/*.pkl
+backend/models/*.json
+backend/uploads/*
+*.csv
+!test_datasets/creditcard_sample.csv
+!test_datasets/README_BENCHMARKS.md
+test_datasets/gpu_bench_*.csv
+test_datasets/gpu_bench_class_*.csv
+*.ipynb
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment variables
+.env
+.env.local
+
+# Demo videos (large files)
+demo/*.mp4
+demo/*.mov
+demo/*.avi
+
+# Backup files
+*.backup

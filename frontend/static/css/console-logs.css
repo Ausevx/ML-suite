@@ -1,0 +1,109 @@
+/* Console/Logs Module Styles */
+
+.console-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 150px);
+}
+
+.console-tabs {
+    display: flex;
+    gap: 2px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 10px;
+}
+
+.console-tab {
+    padding: 8px 16px;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 12px;
+    text-transform: uppercase;
+}
+
+.console-tab:hover {
+    background-color: rgba(0, 255, 0, 0.1);
+    color: var(--text-primary);
+}
+
+.console-tab.active {
+    background-color: rgba(0, 255, 0, 0.15);
+    color: var(--text-primary);
+    border-color: var(--accent);
+    box-shadow: 0 0 5px rgba(0, 255, 0, 0.3);
+}
+
+.console-content {
+    flex: 1;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    padding: 15px;
+    overflow-y: auto;
+    font-family: var(--font-mono);
+    font-size: 13px;
+}
+
+.console-line {
+    margin-bottom: 5px;
+    padding: 3px 5px;
+    border-left: 2px solid transparent;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+.console-line-info {
+    color: var(--text-primary);
+    border-left-color: var(--text-primary);
+}
+
+.console-line-error {
+    color: var(--error);
+    border-left-color: var(--error);
+    background-color: rgba(255, 0, 0, 0.05);
+}
+
+.console-line-warning {
+    color: var(--warning);
+    border-left-color: var(--warning);
+    background-color: rgba(255, 255, 0, 0.05);
+}
+
+.console-line-success {
+    color: var(--success);
+    border-left-color: var(--success);
+}
+
+.console-timestamp {
+    color: var(--text-secondary);
+    margin-right: 10px;
+    font-size: 11px;
+}
+
+.console-controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.console-controls button {
+    font-size: 12px;
+    padding: 8px 16px;
+}
+
+/* Auto-scroll indicator */
+.console-autoscroll {
+    position: absolute;
+    bottom: 60px;
+    right: 30px;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    padding: 5px 10px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    border-radius: 3px;
+}
+
